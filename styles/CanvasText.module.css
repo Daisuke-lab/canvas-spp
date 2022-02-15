@@ -1,0 +1,11 @@
+
+.canvasText {
+    position: absolute;
+    border: none;
+    padding: 0px;
+    margin: 0px;
+    overflow: hidden;
+    background: none;
+    outline: none;
+    resize: none;
+}
