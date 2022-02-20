@@ -5,6 +5,8 @@ import { Html } from 'react-konva-utils';
 import CanvasText, {CanvasTextType} from './CanvasText'
 import {RefType} from '../GlobalType'
 import {createStyles} from '../helpers/createStyles'
+import {updateEditingField, increaseEditingFieldNum, updateText} from '../../store/reducers/canvasReducer'
+import uuid from 'react-uuid'
 interface Props {
     isSelected: boolean,
     onSelect: () => void, 
@@ -12,18 +14,29 @@ interface Props {
     transformable: boolean,
     text: string,
     dispatch: any,
-    field: string
+    field: string,
+    state: any,
+    x: number,
+    y: number,
+    width: number,
+    height: number,
+    erDiagramRef: any,
+    row: any,
+    table: any
 }
+
 function EditableText(props:Props) {
-  //no typescript support
-    const {text, dispatch, field} = props 
+    const {text, dispatch, field, state, stageRef, x, y, width, height, erDiagramRef,
+    row, table} = props
     const trRef = useRef() as any
     const textRef = React.useRef() as any
+    const tables = state.canvases.tables
     const [canvasTextProps, setCanvasTextProps] = useState<CanvasTextType>({
-      display: true,
+      display: false,
       styles: {},
       text: text
     })
+
 
     useEffect(() => {
         if (props.isSelected) {
@@ -35,18 +48,16 @@ function EditableText(props:Props) {
 
 
 
-    const [recOptions, setRecOptions] = useState({
-        x: 10,
-        y: 10,
-        width: 100,
-        height: 100,
-        fill: 'red',
-        id: 'rect1',
+    const [textOptions, setTextOptions] = useState({
+        x,
+        y,
+        width,
+        height,
       });
 
     const onDragEnd = (e:any) => {
-        setRecOptions({
-            ...recOptions,
+        setTextOptions({
+            ...textOptions,
             x: e.target.x(),
             y: e.target.y()
         })
@@ -66,8 +77,8 @@ function EditableText(props:Props) {
             // we will reset it back
             node.scaleX(1);
             node.scaleY(1);
-            setRecOptions({
-                ...recOptions,
+            setTextOptions({
+                ...textOptions,
               x: node.x(),
               y: node.y(),
               // set minimal value
@@ -77,20 +88,43 @@ function EditableText(props:Props) {
     }
 
     const onClick = (e:any) => {
-      console.log('it clicked')
-      console.log(props)
-      if (props.isSelected) {
-        textRef?.current?.hide()
-        trRef?.current?.hide()
-        const styles = createStyles(textRef, props.stageRef)
-        setCanvasTextProps({
-          ...canvasTextProps,
-          styles,
-          display: true})
-      } else {
-        console.log('onSelect')
-        props.onSelect()
+      console.log('it clicked in EditableText')
+      switch (e.evt.detail) {
+        case 1:
+          props.onSelect()
+          break
+        case 2:
+          textRef?.current?.hide()
+          trRef?.current?.hide()
+          const styles = createStyles(textRef, erDiagramRef, stageRef)
+          setCanvasTextProps({
+            ...canvasTextProps,
+            styles,
+            display: true})
+          const tableIndex = tables.indexOf(table)
+          const rowIndex = field !== "title"?table.rows.indexOf(row):null
+          dispatch(updateEditingField({
+            rowIndex,
+            tableIndex,
+            text,
+            field: field,
+            rows: table.rows
+          }))
+          dispatch(increaseEditingFieldNum())
+            break
       }
+      // if (props.isSelected) {
+      //   textRef?.current?.hide()
+      //   trRef?.current?.hide()
+      //   const styles = createStyles(textRef, stageRef)
+      //   setCanvasTextProps({
+      //     ...canvasTextProps,
+      //     styles,
+      //     display: true})
+      // } else {
+      //   console.log('onSelect')
+      //   props.onSelect()
+      // }
     }
 
 
@@ -102,19 +136,23 @@ function EditableText(props:Props) {
         onClick={onClick}
         onTap={props.onSelect}
         ref={textRef}
-        {...recOptions}
+        {...textOptions}
         draggable={props.transformable}
         onDragEnd={onDragEnd}
         onTransformEnd={onTransformEnd}
-        text={canvasTextProps.display?"":canvasTextProps.text}
+        text={text}
         fontFamily='Calibri'
         fill='black'
       />
       <CanvasText {...canvasTextProps} setCanvasTextProps={setCanvasTextProps}
       dispatch={dispatch}
       field={field}
+      state={state}
       textRef={textRef}
-      trRef={trRef}/>
+      trRef={trRef}
+      row={row}
+      table={table}
+      />
           {props.isSelected && props.transformable && (
             <Transformer
               ref={trRef}
@@ -133,7 +171,9 @@ function EditableText(props:Props) {
 
 EditableText.defaultProps = {
   transformable: false,
-  stageRef: null
+  stageRef: null,
+  x: 0,
+  y: 0
 }
 
 export default EditableText

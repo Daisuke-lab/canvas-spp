@@ -6,6 +6,7 @@ import { useAppSelector, useAppDispatch } from '../helpers/hooks'
 import ERDiagram from './ERDiagram'
 import CustomMenu from './CustomMenu';
 import {addRow, openMenu, updateEnabledItems} from "../../store/reducers/canvasReducer"
+import ConnectionPreview from './ConnectionPreview'
 function Conva() {
     const [selectedId, setSelectedId] = useState<string>('')
     const stageRef = React.useRef<HTMLCanvasElement>()
@@ -34,7 +35,9 @@ function Conva() {
         stageRef={stageRef}
         /> */}
         {tables.map((table, index) => (
-          <ERDiagram dispatch={dispatch} state={state} key={`er-diagram-${table.id}`} table={table}/>))}
+          <ERDiagram dispatch={dispatch} state={state} key={`er-diagram-${table.id}`} 
+          table={table} stageRef={stageRef}/>))}
+      <ConnectionPreview state={state} dispatch={dispatch}/>
       </Layer>
     </Stage>
     <CustomMenu/>

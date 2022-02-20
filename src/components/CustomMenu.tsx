@@ -2,7 +2,7 @@ import React, {useEffect, useState} from 'react';
 import Menu from '@mui/material/Menu';
 import MenuItem from '@mui/material/MenuItem';
 import { useAppSelector, useAppDispatch } from '../helpers/hooks'
-import {closeMenu, addRow, addTable, deleteRow} from '../../store/reducers/canvasReducer'
+import {closeMenu, addRow, addTable, deleteRow, deleteTable} from '../../store/reducers/canvasReducer'
 import uuid from 'react-uuid'
 function CustomMenu() {
 const dispatch = useAppDispatch()
@@ -41,7 +41,7 @@ const tableData = {
                  disabled={!enabledItems.includes("add-row")}>Add Row</MenuItem>
                 <MenuItem onClick={() => dispatch(deleteRow())} disabled={!enabledItems.includes("delete-row")}>Delete Row</MenuItem>
                 <MenuItem onClick={() => dispatch(addTable(tableData))} disabled={!enabledItems.includes("add-table")}>Add Table</MenuItem>
-                <MenuItem onClick={() => dispatch(closeMenu())} disabled={!enabledItems.includes("delete-table")}>Delete Table</MenuItem>
+                <MenuItem onClick={() => dispatch(deleteTable())} disabled={!enabledItems.includes("delete-table")}>Delete Table</MenuItem>
                 <MenuItem onClick={() => dispatch(closeMenu())} disabled={!enabledItems.includes("copy")}>Copy</MenuItem>
             </Menu>
         </div>

@@ -13,6 +13,11 @@ export interface TableType {
     id: string,
     title: string
 }
+
+interface ConnectionType {
+    source: {x: number, y:number},
+    destination: {x:number, y:number}
+}
 interface StateType {
     tables: TableType[],
     displayMenu: {
@@ -22,7 +27,10 @@ interface StateType {
     },
     enabledItems: string[],
     currentTable: TableType | null,
-    currentRow: RowType | null
+    currentRow: RowType | null,
+    editingField: {text: string, field:string, tableIndex:number, rowIndex:number} | null,
+    connectionPreview: ConnectionType | null,
+    connections: ConnectionType[]
 }
 
 
@@ -36,7 +44,10 @@ const initialState:StateType = {
     },
     enabledItems: [],
     currentTable: null,
-    currentRow:  null
+    currentRow:  null,
+    editingField: null,
+    connectionPreview: null,
+    connections: []
 
 }
 
@@ -58,9 +69,6 @@ export const canvasSlice = createSlice({
       },
       addRow: (state, action) => {
           const newTables = state.tables.filter(table => table.id !== state.currentTable?.id)
-          //const table = state.tables.find(table => table === state.currentTable)
-          //table.rows = [...state.currentTable.rows, action.payload]
-          //console.log('this is table::', table)
           if (state.currentTable !== null) {
             state.currentTable.rows = [...state.currentTable.rows, action.payload]
             state.tables = [...newTables, state.currentTable]
@@ -69,12 +77,7 @@ export const canvasSlice = createSlice({
       },
       deleteRow: (state) => {
         const newTables = state.tables.filter(table => table.id !== state.currentTable?.id)
-        //const table = state.tables.find(table => table === state.currentTable)
-        //table.rows = [...state.currentTable.rows, action.payload]
-        //console.log('this is table::', table)
         if (state.currentTable !== null && state.currentRow !== null) {
-            console.log('you are here')
-            console.log(state.currentTable.rows.filter(row => row !== state.currentRow).length)
           state.currentTable.rows = state.currentTable.rows.filter(row => row.id !== state.currentRow?.id)
           state.tables = [...newTables, state.currentTable]
           state.currentRow = null
@@ -85,11 +88,17 @@ export const canvasSlice = createSlice({
           state.tables = [...state.tables, action.payload]
           state.displayMenu.display = false
       },
+      deleteTable: (state) => {
+          state.tables = state.tables.filter((table) => table.id !== state.currentTable?.id)
+          state.currentTable = null
+          state.displayMenu.display = false
+      },
       updateEnabledItems: (state, action) => {
           state.enabledItems = action.payload
       },
       updateCurrentTable: (state, action) => {
           state.currentTable = action.payload
+          state.currentRow = null
       },
       updateCurrentRow: (state, action) => {
           state.currentRow = action.payload
@@ -97,33 +106,56 @@ export const canvasSlice = createSlice({
       updateText: (state, action) => {
           const field = action.payload.field
           const newText = action.payload.text
-          const newTables = state.tables.filter(table => table.id !== state.currentTable?.id)
-          if (state.currentTable !== null) {
+          const tableIndex = action.payload.tableIndex
+          const rows = action.payload.rows
+          const rowIndex = action.payload.rowIndex !== null?action.payload.rowIndex:-1
+          const newTables = state.tables.filter((table, index) => index !== tableIndex)
+          const editingTable = state.tables[tableIndex]
+          const editingRow = field !== "title"?editingTable.rows[action.payload.rowIndex]:null
+          console.log(rows)
+          console.log("new Text::", newText)
+          if (editingTable !== undefined) {
             switch(field) {
                 case "title":
-                    state.currentTable.title = newText
+                    editingTable.title = newText
+                    state.tables = [...newTables, editingTable]
+                    break
                 case "key":
-                    if (state.currentRow !== null) {
-                        const newRows = state.currentTable.rows.filter(row => row.id !== state.currentRow?.id)
-                        state.currentRow.key = newText
-                        state.currentTable.rows = [...newRows, state.currentRow]
-                        state.tables = [...newTables, state.currentTable]
+                    if (editingRow !== null) {
+                        editingRow.key = newText
+                        const newRows = [...rows]
+                        newRows.splice(rowIndex, 1, editingRow)
+                        editingTable.rows = newRows
+                        state.tables = [...newTables, editingTable]
+                        break
                     }
                 case "value":
-                    if (state.currentRow !== null) {
-                        const newRows = state.currentTable.rows.filter(row => row.id !== state.currentRow?.id)
-                        state.currentRow.value= newText
-                        state.currentTable.rows = [...newRows, state.currentRow]
-                        state.tables = [...newTables, state.currentTable]
+                    if (editingRow !== null) {
+                        editingRow.value = newText
+                        const newRows = [...rows]
+                        newRows.splice(rowIndex, 1, editingRow)
+                        editingTable.rows = newRows
+                        state.tables = [...newTables, editingTable]
+                        break
                     }
-            }
-            }
+                }
+          }
+      },
+      resetEditingField: (state) => {
+          state.editingField = null
+      },
+      updateEditingField: (state, action) => {
+          state.editingField = action.payload
+      },
+      updateConnectionPreview: (state, action) => {
+          state.connectionPreview = action.payload
       }
     },
   })
   
   // Action creators are generated for each case reducer function
-  export const { insertRows, openMenu, closeMenu, addRow, updateEnabledItems, addTable,
-                updateCurrentTable, updateCurrentRow, deleteRow, updateText} = canvasSlice.actions
+  export const { insertRows, openMenu, closeMenu, addRow, updateEnabledItems, addTable, deleteTable,
+                updateCurrentTable, updateCurrentRow, deleteRow, updateText, updateEditingField,
+                resetEditingField, updateConnectionPreview} = canvasSlice.actions
   
   export default canvasSlice.reducer

@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Stage, Layer, Rect } from 'react-konva';
 import { Html } from 'react-konva-utils';
 import styles from '../../styles/CanvasText.module.css'
-import {updateText} from '../../store/reducers/canvasReducer'
+import {updateText, updateEditingField, decreaseEditingFieldNum, resetEditingField} from '../../store/reducers/canvasReducer'
 export interface CanvasTextType {
     display: boolean,
     text: string,
@@ -14,11 +14,18 @@ interface Props extends CanvasTextType {
     textRef: any,
     trRef: any,
     dispatch: any,
-    field: string
+    field: string,
+    state: any,
+    row: any,
+    table: any
 }
 function CanvasText(props:Props) {
-    const {field, dispatch} = props
+    const {field, dispatch, styles, state, row, table} = props
     const canvasText = {display:props.display, text:props.text, styles:props.styles}
+    const editingField = state.canvases.editingField
+    const tables = state.canvases.tables
+    const tableIndex = tables.indexOf(table)
+    const rowIndex = field !== "title"?table.rows.indexOf(row):null
     const textareaRef = React.useRef() as React.LegacyRef<HTMLElement<textarea>>;
     const onKeyDown = (e:React.KeyboardEvent<HTMLTextAreaElement>) => {
         const keyCode = e.keyCode;
@@ -27,20 +34,41 @@ function CanvasText(props:Props) {
                 ...canvasText,
                 display: false
             })
-            dispatch(updateText({field, text:canvasText.text}))
+            console.log(tableIndex)
+            console.log(rowIndex)
+            console.log(row?.id)
+            dispatch(updateText({field, text:canvasText.text, tableIndex, rowIndex, rows: table.rows}))
+            dispatch(resetEditingField())
+            dispatch(decreaseEditingFieldNum())
             props.textRef?.current?.show()
             props.trRef?.current?.show()
         }
     }
 
-    useEffect(() => {
-        console.log("useEffect")
-        if (textareaRef?.current !== undefined && textareaRef?.current !== null) {
-            console.log("you are here")
-            //textareaRef.current.style.height = 'auto';
-            //textareaRef.current.style.height = textareaRef?.current.scrollHeight + 3 + 'px';
+    const display = () => {
+        let show = true
+        if (field !== editingField?.field) {
+            show = false
+        } else if (editingField?.tableIndex !== tableIndex) {
+            show = false
+        } else if (editingField?.rowIndex !== rowIndex) {
+            show = false
         }
-    },[props.display])
+        return show
+    }
+
+    
+    useEffect(() => {
+        if (!display()) {
+            props.textRef?.current?.show()
+            props.trRef?.current?.show()
+        } else {
+            props.textRef?.current?.hide()
+            props.trRef?.current?.hide()
+        }
+    }, [editingField])
+
+
 
     const onChange = (event:React.ChangeEvent<HTMLTextAreaElement>) => {
         const currentValue = event.currentTarget.value
@@ -48,22 +76,23 @@ function CanvasText(props:Props) {
             ...canvasText,
             text: currentValue,
         })
+        dispatch(updateEditingField({...editingField, field, text: currentValue, tableIndex: tableIndex,
+        rowIndex: rowIndex}))
     }
     return (
         <Html
-            divProps={{
-              style: {
-                margin:0,
-                padding: 0
-              },
+        divProps={
+            {style:{
+                transform: "none"
             }}
+        }
           >
-            {props.display?<textarea 
+            {display()?<textarea 
             defaultValue={props.text}
             ref={textareaRef}
+            style={styles}
             onKeyDown={onKeyDown} 
             onChange={onChange} 
-            style={props.styles}
             className={styles.canvasText}/>
             :<></>}
           </Html>

@@ -1,17 +1,18 @@
-export const createStyles = (textRef, stageRef) => {
+export const createStyles = (textRef, erDiagramRef, stageRef) => {
     const styles:any = {}
     const textPosition = textRef.current.absolutePosition();
 
-    // so position of textarea will be the sum of positions above:
-//     const  areaPosition = {
-//         x: stageRef.current.container().offsetLeft + textPosition.x,
-//         y: stageRef.current.container().offsetTop + textPosition.y,
-//     };
 
-//    // textarea.value = textRef.current.text();
-//    console.log(areaPosition)
-   console.log(textPosition)
+    // so position of textarea will be the sum of positions above:
+    const  areaPosition = {
+        x: stageRef.current.container().offsetLeft + textPosition.x,
+        y: stageRef.current.container().offsetTop + textPosition.y,
+    };
+
+    
     styles.position = 'absolute';
+    // styles.top = stageRef.current.container().offsetLeft + 'px';
+    // styles.left = stageRef.current.container().offsetTop + 'px';
     styles.top = textPosition.y + 'px';
     styles.left = textPosition.x + 'px';
     styles.width = textRef.current.width() - textRef.current.padding() * 2 + 'px';
@@ -29,10 +30,15 @@ export const createStyles = (textRef, stageRef) => {
     styles.transformOrigin = 'left top';
     styles.textAlign = textRef.current.align();
     styles.color = textRef.current.fill();
+    const scale = erDiagramRef.current.scale();
+    console.log(textRef.current)
+    console.log(textRef.current.parent.scale())
 
 
-    const rotation = textRef.current.rotation();
+    const rotation = erDiagramRef.current.rotation();
     var transform:string = '';
+    transform += `scaleX(${scale.x})`
+    transform += `scaleY(${scale.y})`
     if (rotation) {
         transform += 'rotateZ(' + rotation + 'deg)';
     }
