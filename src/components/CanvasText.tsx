@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Stage, Layer, Rect } from 'react-konva';
 import { Html } from 'react-konva-utils';
 import styles from '../../styles/CanvasText.module.css'
-import {updateText, updateEditingField, decreaseEditingFieldNum, resetEditingField} from '../../store/reducers/canvasReducer'
+import {updateText, updateEditingField, resetEditingField} from '../../store/reducers/canvasReducer'
 export interface CanvasTextType {
     display: boolean,
     text: string,
@@ -34,12 +34,8 @@ function CanvasText(props:Props) {
                 ...canvasText,
                 display: false
             })
-            console.log(tableIndex)
-            console.log(rowIndex)
-            console.log(row?.id)
             dispatch(updateText({field, text:canvasText.text, tableIndex, rowIndex, rows: table.rows}))
             dispatch(resetEditingField())
-            dispatch(decreaseEditingFieldNum())
             props.textRef?.current?.show()
             props.trRef?.current?.show()
         }

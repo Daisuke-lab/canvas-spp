@@ -1,4 +1,6 @@
-export const createStyles = (textRef, erDiagramRef, stageRef) => {
+import { StyleOutlined } from "@mui/icons-material";
+import { TextStyleType, updateDefaultTextStyle } from "../../store/reducers/canvasReducer";
+export const createStyles = (textRef, erDiagramRef, stageRef, dispatch) => {
     const styles:any = {}
     const textPosition = textRef.current.absolutePosition();
 
@@ -23,7 +25,10 @@ export const createStyles = (textRef, erDiagramRef, stageRef) => {
     styles.margin = '0px';
     styles.overflow = 'hidden';
     styles.background = 'none';
+    styles.fontWeight = textRef.current.attrs?.fontStyle.includes("bold")?"bold":"unset"
+    styles.fontStyle = textRef.current.attrs?.fontStyle.includes("italic")?"italic":"unset"
     styles.outline = 'none';
+    styles.textDecorationLine = textRef.current.attrs?.textDecoration
     styles.resize = 'none';
     styles.lineHeight = textRef.current.lineHeight();
     styles.fontFamily = textRef.current.fontFamily();
@@ -44,7 +49,23 @@ export const createStyles = (textRef, erDiagramRef, stageRef) => {
     }
 
     styles.transform = transform;
+    insertIntoDefaultTextStyle(styles, dispatch)
 
     return styles
 
+}
+
+const insertIntoDefaultTextStyle = (styles:TextStyleType, dispatch:any) => {
+    console.log(styles.fontSize)
+    const newDefaultTextStyle = {
+        color: styles.color,
+        fontWeight: styles.fontWeight,
+        fontStyle: styles.fontStyle,
+        fontSize: parseInt(styles.fontSize as string),
+        fontFamily: styles.fontFamily,
+        textDecorationLine: styles.textDecorationLine,
+        textAlign: styles.textAlign
+        }
+
+    dispatch(updateDefaultTextStyle(newDefaultTextStyle))
 }

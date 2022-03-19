@@ -12,3 +12,6 @@ export interface BoxType {
     width: number | string,
     height: number | string
 }
+
+
+export type ConnectionOptionType = "one" | "many" | "one-or-many" | "only-one" | "zero-or-many" | "zero-or-one" | "normal"

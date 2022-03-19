@@ -1,0 +1,19 @@
+.navOptionsContainer {
+    justify-content: start !important;
+    margin-left: 10px;
+}
+
+.navOption {
+    color: white;
+    margin-right: 20px;
+}
+
+.canvasOption {
+    margin-right: 10px;
+}
+
+.canvasOption > select {
+    height: 100%;
+    box-shadow: none;
+    border: none;
+}

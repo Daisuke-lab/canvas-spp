@@ -25,40 +25,46 @@ function Row(props:Props) {
     const currentTable = state.canvases.currentTable
     const currentRow = state.canvases.currentRow
     const fieldWidth = erDiagramWidth / 2
+    const editingField = state.canvases.editingField
     const onRowRightClick = (event: any) => {
       if (row === currentRow) {
-        console.log('right click in row')
         const target = event.currentTarget
+        console.log('row clicked')
         dispatch(openMenu({x: target.parent.attrs.x, y:target.parent.attrs.y}))
-        dispatch(updateEnabledItems(["delete-row","add-row"]))
+        dispatch(updateEnabledItems(["delete-row","add-row", "delete-table"]))
       }
     }
 
     const onClick = () => {
-        console.log('it clicked', index)
+      console.log("row clicked")
         if (table === currentTable && row !== currentRow) {
           console.log(row)
           console.log(currentRow)
           dispatch(updateCurrentRow(row))
+          dispatch(updateCurrentTable(table))
+        } else if (table !== currentTable) {
+          console.log("you are updating table from row")
+          dispatch(updateCurrentTable(table))
+        } else {
+          console.log(table === currentTable)
+          console.log(editingField)
         }
     }
   return (
     <Group onContextMenu={onRowRightClick} onClick={onClick}>
-      {currentRow === row?
-          <Rect 
-          stroke="blue"
-          strokeWidth={1.2}
+          <Line
           x={0}
-          y={rowHeight*index + titleHeight}
-          width={erDiagramWidth}
-          height={rowHeight}
+          y={rowHeight*(index+1) + titleHeight}
+          stroke="#432818"
+          strokeWidth={1}
+          tension={1}
+          points={[0,0, erDiagramWidth,0]}
           />
-          :<></>}
 
           <Line
           x={0}
           y={rowHeight*index + titleHeight}
-          stroke="black"
+          stroke="#432818"
           strokeWidth={1}
           tension={1}
           points={[0,0, 0,rowHeight]}
@@ -82,7 +88,7 @@ function Row(props:Props) {
             <Line
           x={fieldWidth}
           y={rowHeight*index + titleHeight}
-          stroke="black"
+          stroke="#432818"
           strokeWidth={1}
           tension={1}
           points={[0,0, 0,rowHeight]}
@@ -106,12 +112,22 @@ function Row(props:Props) {
             <Line
           x={fieldWidth * 2}
           y={rowHeight*index + titleHeight}
-          stroke="black"
+          stroke="#432818"
           strokeWidth={1}
           tension={1}
           points={[0,0, 0,rowHeight]}
           />
-          
+          {currentRow === row?
+          <Rect 
+          stroke="#99582A"
+          strokeWidth={1.2}
+          zIndex={15}
+          x={0}
+          y={rowHeight*index + titleHeight}
+          width={erDiagramWidth}
+          height={rowHeight}
+          />
+          :<></>}
         </Group>
   )
 }

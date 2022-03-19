@@ -1,6 +1,7 @@
 import React from 'react'
 import { Stage, Layer, Rect, Text, Line } from "react-konva";
 import Anchor from './Anchor'
+import {defaultTitleHeight, defaultErDiagramWidth, defaultRowHeight} from './ERDiagram'
 interface CoordinateType {
      x: number,
      y: number,
@@ -11,25 +12,34 @@ interface CoordinateType {
 interface Props {
     targetRef: any,
     state: any,
-    dispatch: any
+    dispatch: any,
+    id: string
 }
 function Border(props:Props) {
-    const {targetRef, state, dispatch} = props
+    const {targetRef, state, dispatch, id} = props
     //const absolutePosition = targetRef.current?.absolutePosition()
     const absolutePosition = {x:0,y:0}
-    console.log(targetRef.current?.clientX)
-    console.log(absolutePosition)
+    const table = state.canvases.tables.find((table) => table.id === id)
+    const titleHeight = defaultTitleHeight
+    const erDiagramWidth = defaultErDiagramWidth
+    const rowHeight = defaultRowHeight
+    const erDiagramHeight = titleHeight + rowHeight * table.rows.length
+    //console.log(table.scale.y)
+    //console.log(rowHeight)
+    //console.log(erDiagramHeight)
 
     const getX = (location:string) => {
         switch(location) {
             case "left":
                 return absolutePosition?.x
             case "right":
-                return absolutePosition?.x + targetRef.current?.width()
+                return absolutePosition?.x + erDiagramWidth
             case "top":
                 return absolutePosition?.x
             case "bottom":
                 return absolutePosition?.x  
+            default:
+                return 0
         }
     }
 
@@ -42,33 +52,35 @@ function Border(props:Props) {
             case "top":
                 return absolutePosition?.y
             case "bottom":
-                return absolutePosition?.y + targetRef.current?.height()     
+                return absolutePosition?.y + erDiagramHeight
+            default:
+                return 0
         }
     }
     
     const getPoints = (location:string) => {
         switch(location) {
             case "left":
-                return [0,0,0, targetRef.current?.height()]
+                return [0,0,0, erDiagramHeight]
             case "right":
-                return [0,0,0, targetRef.current?.height()]
+                return [0,0,0, erDiagramHeight]
             case "top":
-                return [0,0,targetRef.current?.width(),0]
+                return [0,0,erDiagramWidth,0]
             case "bottom":
-                return [0,0,targetRef.current?.width(),0]     
+                return [0,0,erDiagramWidth,0]     
         }
     }
 
     const getAnchorPoint = (location:string) => {
         switch(location) {
             case "left":
-                return {x: getX(location), y:getY(location) + (targetRef.current?.height()/2)}
+                return {x: getX(location), y:getY(location) + (erDiagramHeight/2)}
             case "right":
-                return {x: getX(location), y:getY(location) + (targetRef.current?.height()/2)}
+                return {x: getX(location), y:getY(location) + (erDiagramHeight/2)}
             case "top":
-                return {x: getX(location) + (targetRef.current?.width() / 2), y: getY(location)}
+                return {x: getX(location) + (erDiagramWidth/ 2), y: getY(location)}
             case "bottom":
-                return {x: getX(location) + (targetRef.current?.width() / 2), y: getY(location)}
+                return {x: getX(location) + (erDiagramWidth / 2), y: getY(location)}
             default:
                 return {x:0, y:0}
         }
@@ -84,11 +96,12 @@ function Border(props:Props) {
             x={getX(lineLocation)}
             y={getY(lineLocation)}
             points={getPoints(lineLocation)}
-            stroke="red"
-            strokeWidth={2}
+            stroke="#432818"
+            strokeWidth={1}
             perfectDrawEnabled={false}
           />
-          <Anchor {...getAnchorPoint(lineLocation)} state={state} dispatch={dispatch}/>
+          <Anchor {...getAnchorPoint(lineLocation)} state={state} dispatch={dispatch}
+          targetRef={targetRef} id={id} location={lineLocation}/>
           </>)
         })}
       </>

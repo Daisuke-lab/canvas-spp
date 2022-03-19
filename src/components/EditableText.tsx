@@ -5,14 +5,13 @@ import { Html } from 'react-konva-utils';
 import CanvasText, {CanvasTextType} from './CanvasText'
 import {RefType} from '../GlobalType'
 import {createStyles} from '../helpers/createStyles'
-import {updateEditingField, increaseEditingFieldNum, updateText} from '../../store/reducers/canvasReducer'
+import {updateEditingField, updateText, TextStyleType, TextType} from '../../store/reducers/canvasReducer'
 import uuid from 'react-uuid'
 interface Props {
     isSelected: boolean,
-    onSelect: () => void, 
     stageRef: any,
     transformable: boolean,
-    text: string,
+    text: TextType,
     dispatch: any,
     field: string,
     state: any,
@@ -34,8 +33,9 @@ function EditableText(props:Props) {
     const [canvasTextProps, setCanvasTextProps] = useState<CanvasTextType>({
       display: false,
       styles: {},
-      text: text
+      text: text.text
     })
+    console.log(text)
 
 
     useEffect(() => {
@@ -91,12 +91,12 @@ function EditableText(props:Props) {
       console.log('it clicked in EditableText')
       switch (e.evt.detail) {
         case 1:
-          props.onSelect()
+          //props.onSelect(e)
           break
         case 2:
           textRef?.current?.hide()
           trRef?.current?.hide()
-          const styles = createStyles(textRef, erDiagramRef, stageRef)
+          const styles = createStyles(textRef, erDiagramRef, stageRef, dispatch)
           setCanvasTextProps({
             ...canvasTextProps,
             styles,
@@ -110,7 +110,6 @@ function EditableText(props:Props) {
             field: field,
             rows: table.rows
           }))
-          dispatch(increaseEditingFieldNum())
             break
       }
       // if (props.isSelected) {
@@ -129,20 +128,22 @@ function EditableText(props:Props) {
 
 
 
-
     return (
         <>
         <Text
         onClick={onClick}
-        onTap={props.onSelect}
         ref={textRef}
         {...textOptions}
         draggable={props.transformable}
         onDragEnd={onDragEnd}
         onTransformEnd={onTransformEnd}
-        text={text}
-        fontFamily='Calibri'
-        fill='black'
+        text={text.text}
+        fontFamily={text.style?.fontFamily}
+        fill={text.style?.color}
+        fontStyle={`${text.style?.fontStyle} ${text.style?.fontWeight}`.replaceAll('unset', "")}
+        fontSize={text.style?.fontSize}
+        textDecoration={text.style?.textDecorationLine}
+        align={text.style?.textAlign}
       />
       <CanvasText {...canvasTextProps} setCanvasTextProps={setCanvasTextProps}
       dispatch={dispatch}
@@ -157,6 +158,7 @@ function EditableText(props:Props) {
             <Transformer
               ref={trRef}
               boundBoxFunc={(oldBox, newBox) => {
+                console.log(newBox)
                 // limit resize
                 if (newBox.width < 5 || newBox.height < 5) {
                   return oldBox;

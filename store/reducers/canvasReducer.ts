@@ -1,22 +1,49 @@
 
+import { ConnectWithoutContactSharp } from '@mui/icons-material'
 import { createSlice, PayloadAction } from '@reduxjs/toolkit'
+import { ConnectionOptionType } from '../../src/GlobalType'
 
-
+export interface TextStyleType {
+    fontFamily: string
+    fontSize : number,
+    fontWeight: "unset" | "bold",
+    fontStyle: "unset" | "italic",
+    textDecorationLine: "unset" | "underline",
+    textAlign: "unset" | "left" | "center" | "right"
+    color: string
+}
+export interface TextType {
+    text: string,
+    style: TextStyleType
+    
+    
+}
 export interface RowType {
-    key: string,
-    value: string,
+    key: TextType,
+    value: TextType,
     id: string
 }
 
 export interface TableType {
     rows: RowType[],
     id: string,
-    title: string
+    title: TextType,
+    x: number,
+    y: number,
+    rotation: number,
+    scale: {x: number, y:number}
 }
 
-interface ConnectionType {
-    source: {x: number, y:number},
-    destination: {x:number, y:number}
+export type AnchorLocationType = "top" | "bottom" | "left" | "right"
+export interface ConnectionPointType {
+    id: string,
+    anchorLocation: AnchorLocationType,
+    connectionOption: ConnectionOptionType
+}
+export interface ConnectionType {
+    source: ConnectionPointType,
+    destination: {x:number, y:number, connectionOption: ConnectionOptionType} | ConnectionPointType,
+    id: string
 }
 interface StateType {
     tables: TableType[],
@@ -28,9 +55,15 @@ interface StateType {
     enabledItems: string[],
     currentTable: TableType | null,
     currentRow: RowType | null,
+    currentConnectionId: null | string,
     editingField: {text: string, field:string, tableIndex:number, rowIndex:number} | null,
     connectionPreview: ConnectionType | null,
-    connections: ConnectionType[]
+    connections: ConnectionType[],
+    defaultConnectionOption: {
+        source: ConnectionOptionType,
+        destination: ConnectionOptionType
+    },
+    defaultTextStyle: TextStyleType,
 }
 
 
@@ -45,9 +78,25 @@ const initialState:StateType = {
     enabledItems: [],
     currentTable: null,
     currentRow:  null,
+    currentConnectionId: null,
     editingField: null,
     connectionPreview: null,
-    connections: []
+    connections: [],
+    defaultConnectionOption: {
+        source: "normal",
+        destination: "normal"
+    },
+    defaultTextStyle: {
+        fontFamily: "Caribri",
+        fontSize: 10,
+        fontWeight: "unset",
+        fontStyle: "unset",
+        textDecorationLine: "unset",
+        color: "black",
+        textAlign: "unset"
+
+        
+    },
 
 }
 
@@ -89,6 +138,7 @@ export const canvasSlice = createSlice({
           state.displayMenu.display = false
       },
       deleteTable: (state) => {
+          state.connections = state.connections.filter((connection) => connection.source.id !== state.currentTable?.id && connection.destination?.id !== state.currentTable?.id)
           state.tables = state.tables.filter((table) => table.id !== state.currentTable?.id)
           state.currentTable = null
           state.displayMenu.display = false
@@ -97,11 +147,23 @@ export const canvasSlice = createSlice({
           state.enabledItems = action.payload
       },
       updateCurrentTable: (state, action) => {
+          if (state.currentTable?.id !== action.payload.id) {
+            state.currentRow = null
+          }
           state.currentTable = action.payload
-          state.currentRow = null
+          //state.disableContainerClick = false
       },
       updateCurrentRow: (state, action) => {
           state.currentRow = action.payload
+      },
+      updateCurrentConnectionId: (state, action) => {
+          state.currentConnectionId = action.payload
+      },
+      deleteConnection: (state) => {
+          const newConnections = state.connections.filter((connection) => connection.id !== state.currentConnectionId)
+          state.connections = [...newConnections]
+          state.currentConnectionId = null
+          state.displayMenu.display = false 
       },
       updateText: (state, action) => {
           const field = action.payload.field
@@ -117,12 +179,14 @@ export const canvasSlice = createSlice({
           if (editingTable !== undefined) {
             switch(field) {
                 case "title":
-                    editingTable.title = newText
+                    //editingTable.title.text = newText
+                    editingTable.title = {style:state.defaultTextStyle, text: newText}
                     state.tables = [...newTables, editingTable]
                     break
                 case "key":
                     if (editingRow !== null) {
-                        editingRow.key = newText
+                        //editingRow.key.text = newText
+                        editingRow.key = {style:state.defaultTextStyle, text: newText}
                         const newRows = [...rows]
                         newRows.splice(rowIndex, 1, editingRow)
                         editingTable.rows = newRows
@@ -131,7 +195,8 @@ export const canvasSlice = createSlice({
                     }
                 case "value":
                     if (editingRow !== null) {
-                        editingRow.value = newText
+                        editingRow.value.text = newText
+                        editingRow.value = {style:state.defaultTextStyle, text: newText}
                         const newRows = [...rows]
                         newRows.splice(rowIndex, 1, editingRow)
                         editingTable.rows = newRows
@@ -149,6 +214,34 @@ export const canvasSlice = createSlice({
       },
       updateConnectionPreview: (state, action) => {
           state.connectionPreview = action.payload
+      },
+      addConnection: (state, action) => {
+          state.connections = [...state.connections, action.payload]
+      },
+      updateTable:(state, action) => {
+          const tables = state.tables.filter((table)=> table.id !== action.payload.id)
+          state.tables = [...tables, action.payload]
+      },
+      resetCurrentSelection: (state) => {
+          state.currentTable = null
+          state.currentRow = null
+          state.currentConnectionId = null
+      },
+      updateDefaultConnectionOption: (state, action) => {
+          state.defaultConnectionOption = action.payload
+      },
+      updateConnections: (state, action) => {
+          state.connections = action.payload
+      },
+      updateDefaultTextStyle: (state, action) => {
+          state.defaultTextStyle = action.payload
+      },
+
+      increaseDefaultFontSize: (state) => {
+          state.defaultTextStyle.fontSize += 1
+      },
+      decreaseDefaultFontSize: (state) => {
+          state.defaultTextStyle.fontSize -= 1
       }
     },
   })
@@ -156,6 +249,9 @@ export const canvasSlice = createSlice({
   // Action creators are generated for each case reducer function
   export const { insertRows, openMenu, closeMenu, addRow, updateEnabledItems, addTable, deleteTable,
                 updateCurrentTable, updateCurrentRow, deleteRow, updateText, updateEditingField,
-                resetEditingField, updateConnectionPreview} = canvasSlice.actions
+                resetEditingField, updateConnectionPreview, addConnection, updateTable,
+                updateCurrentConnectionId, deleteConnection, resetCurrentSelection,
+                updateDefaultConnectionOption, updateConnections, updateDefaultTextStyle,
+                increaseDefaultFontSize, decreaseDefaultFontSize} = canvasSlice.actions
   
   export default canvasSlice.reducer

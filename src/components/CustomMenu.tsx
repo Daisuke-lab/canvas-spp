@@ -2,7 +2,7 @@ import React, {useEffect, useState} from 'react';
 import Menu from '@mui/material/Menu';
 import MenuItem from '@mui/material/MenuItem';
 import { useAppSelector, useAppDispatch } from '../helpers/hooks'
-import {closeMenu, addRow, addTable, deleteRow, deleteTable} from '../../store/reducers/canvasReducer'
+import {closeMenu, addRow, addTable, deleteRow, deleteTable, deleteConnection} from '../../store/reducers/canvasReducer'
 import uuid from 'react-uuid'
 function CustomMenu() {
 const dispatch = useAppDispatch()
@@ -20,11 +20,19 @@ useEffect(()=> {
     setAnchorEl(newDiv)
 }, [displayMenu.display])
 const tableData = {
-    title: "this is title",
+    title: {text:"this is title",font:"Caribri"},
     rows: [],
+    id: uuid(),
+    x: displayMenu.x,
+    y: displayMenu.y,
+    rotation: 0,
+    scale: {x:1,y:1}    
+}
+
+const rowData = {
+    key: {text: "Field", font:"Caribri"},
+    value:{text: "Integer", font: "Caribri"},
     id: uuid()
-    
-    
 }
 
   return <div>
@@ -37,11 +45,12 @@ const tableData = {
                 'aria-labelledby': 'basic-button',
                 }}
             >
-                <MenuItem onClick={() => dispatch(addRow({key: "key", value: "value1", id: uuid()}))}
+                <MenuItem onClick={() => dispatch(addRow(rowData))}
                  disabled={!enabledItems.includes("add-row")}>Add Row</MenuItem>
                 <MenuItem onClick={() => dispatch(deleteRow())} disabled={!enabledItems.includes("delete-row")}>Delete Row</MenuItem>
                 <MenuItem onClick={() => dispatch(addTable(tableData))} disabled={!enabledItems.includes("add-table")}>Add Table</MenuItem>
                 <MenuItem onClick={() => dispatch(deleteTable())} disabled={!enabledItems.includes("delete-table")}>Delete Table</MenuItem>
+                <MenuItem onClick={() => dispatch(deleteConnection())} disabled={!enabledItems.includes("delete-connection")}>Delete Connection</MenuItem>
                 <MenuItem onClick={() => dispatch(closeMenu())} disabled={!enabledItems.includes("copy")}>Copy</MenuItem>
             </Menu>
         </div>
