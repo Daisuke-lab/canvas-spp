@@ -6,6 +6,7 @@ import uuid from 'react-uuid'
 import { ConnectionOptionType } from '../GlobalType';
 import {getR, getRotation} from '../helpers/transformHelper'
 import { ScaleSharp } from '@mui/icons-material';
+import backendAxios from '../helpers/axios';
 interface Props {
     x: any,
     y: any,
@@ -24,7 +25,6 @@ interface DestinationType {
 function Anchor(props:Props) {
     const {x, y, dispatch, state, targetRef, id, location} = props
     const anchorRef = useRef<any>(null);
-    console.log(x,y)
     const currentConnectionPreview = state.canvases.connectionPreview
     const defaultConnectionOption = state.canvases.defaultConnectionOption
     const [destination, setDestination] = useState<DestinationType | null>(null)
@@ -95,7 +95,7 @@ function Anchor(props:Props) {
         dispatch(updateConnectionPreview(connectionPreview))
       }
 
-    const handleAnchorDragEnd = (e:any) => {
+    const handleAnchorDragEnd = async (e:any) => {
       const absolutePosition = targetRef.current?.absolutePosition()
       const stage = e.target.getStage();
       const pointerPosition = stage.getPointerPosition();
@@ -108,9 +108,15 @@ function Anchor(props:Props) {
         destination:finalDestination,
         id: connectionId
         }
-        dispatch(addConnection(connectionPreview))
-        dispatch(updateConnectionPreview(null))
-        dispatch(updateCurrentConnectionId(connectionId))
+        try {
+          const res = await backendAxios.post("/api/v1/connection", connectionPreview)
+          console.log(res)
+          dispatch(addConnection(connectionPreview))
+          dispatch(updateConnectionPreview(null))
+          dispatch(updateCurrentConnectionId(connectionId))
+        } catch (err) {
+          console.log(err)
+        }
       }
 
       const getAnchorLocation = (name:string) => {
@@ -158,13 +164,6 @@ function Anchor(props:Props) {
         );
       } else if (typeof r1.attrs.radius === "number") {
         const circleAbsolutePosition = r1.absolutePosition()
-        // console.log('.......................')
-        // console.log("point::", r2.x, r2.y)
-        // console.log("r1::", circleAbsolutePosition)
-        // console.log(r2.x > circleAbsolutePosition.x - (r1.attrs.radius))
-        // console.log(r2.x < circleAbsolutePosition.x + (r1.attrs.radius))
-        // console.log(r2.y > circleAbsolutePosition.y - (r1.attrs.radius))
-        // console.log(r2.y < circleAbsolutePosition.y + (r1.attrs.radius))
         return (
           r2.x > circleAbsolutePosition.x - (r1.attrs.radius)&&
           r2.x < circleAbsolutePosition.x + (r1.attrs.radius) &&
@@ -173,7 +172,7 @@ function Anchor(props:Props) {
         )
       }else return false
     }
-    console.log(targetRef)
+
     
   return (
     <Circle

@@ -3,7 +3,9 @@ import { Stage, Layer, Rect } from 'react-konva';
 import { Html } from 'react-konva-utils';
 import styles from '../../styles/CanvasText.module.css'
 import {updateText, updateEditingField, resetEditingField} from '../../store/reducers/canvasReducer'
+import backendAxios from '../helpers/axios';
 export interface CanvasTextType {
+    id: string,
     display: boolean,
     text: string,
     styles: any
@@ -21,23 +23,40 @@ interface Props extends CanvasTextType {
 }
 function CanvasText(props:Props) {
     const {field, dispatch, styles, state, row, table} = props
-    const canvasText = {display:props.display, text:props.text, styles:props.styles}
+    const canvasText = {display:props.display, text:props.text, styles:props.styles, id: props.id}
     const editingField = state.canvases.editingField
+    const defaultTextStyle = state.canvases.defaultTextStyle
     const tables = state.canvases.tables
     const tableIndex = tables.indexOf(table)
     const rowIndex = field !== "title"?table.rows.indexOf(row):null
     const textareaRef = React.useRef() as React.LegacyRef<HTMLElement<textarea>>;
-    const onKeyDown = (e:React.KeyboardEvent<HTMLTextAreaElement>) => {
+    const currentTable = state.canvases.currentTable
+    const onKeyDown = async (e:React.KeyboardEvent<HTMLTextAreaElement>) => {
         const keyCode = e.keyCode;
         if (keyCode === 13) {
             props.setCanvasTextProps({
                 ...canvasText,
                 display: false
             })
-            dispatch(updateText({field, text:canvasText.text, tableIndex, rowIndex, rows: table.rows}))
-            dispatch(resetEditingField())
-            props.textRef?.current?.show()
-            props.trRef?.current?.show()
+
+            try {
+                dispatch(updateText({field, text:canvasText.text, tableIndex, rowIndex, rows: table.rows, id:props.id}))
+                dispatch(resetEditingField())
+                props.textRef?.current?.show()
+                props.trRef?.current?.show()
+                const body = {
+                    content: canvasText.text,
+                    style: defaultTextStyle
+                }
+                console.log({content: canvasText.text})
+                const res = await backendAxios.put(`/api/v1/text/${currentTable?.id}/${props.id}`, body)
+                console.log(res.data)
+                
+            } catch(err) {
+                console.log(err)
+                props.textRef?.current?.hide()
+                props.trRef?.current?.hide()
+            }
         }
     }
 
@@ -88,7 +107,7 @@ function CanvasText(props:Props) {
             ref={textareaRef}
             style={styles}
             onKeyDown={onKeyDown} 
-            onChange={onChange} 
+            onChange={onChange}
             className={styles.canvasText}/>
             :<></>}
           </Html>

@@ -38,16 +38,11 @@ function Row(props:Props) {
     const onClick = () => {
       console.log("row clicked")
         if (table === currentTable && row !== currentRow) {
-          console.log(row)
-          console.log(currentRow)
           dispatch(updateCurrentRow(row))
           dispatch(updateCurrentTable(table))
         } else if (table !== currentTable) {
           console.log("you are updating table from row")
           dispatch(updateCurrentTable(table))
-        } else {
-          console.log(table === currentTable)
-          console.log(editingField)
         }
     }
   return (
@@ -93,22 +88,6 @@ function Row(props:Props) {
           tension={1}
           points={[0,0, 0,rowHeight]}
           />
-          <EditableText
-            onSelect={onClick}
-            isSelected={currentRow === row}
-            text={row.value}
-            field="value"
-            dispatch={dispatch}
-            state={state}
-            stageRef={stageRef}
-            x={fieldWidth}
-            y={rowHeight*index + titleHeight}
-            width={fieldWidth}
-            height = {rowHeight}
-            erDiagramRef={erDiagramRef}
-            row={row}
-            table={table}
-            />
             <Line
           x={fieldWidth * 2}
           y={rowHeight*index + titleHeight}
@@ -128,6 +107,22 @@ function Row(props:Props) {
           height={rowHeight}
           />
           :<></>}
+          <EditableText
+            onSelect={onClick}
+            isSelected={currentRow === row}
+            text={row.value}
+            field="value"
+            dispatch={dispatch}
+            state={state}
+            stageRef={stageRef}
+            x={fieldWidth}
+            y={rowHeight*index + titleHeight}
+            width={fieldWidth}
+            height = {rowHeight}
+            erDiagramRef={erDiagramRef}
+            row={row}
+            table={table}
+            />
         </Group>
   )
 }

@@ -57,6 +57,7 @@ function FontFamily() {
           onClose={handleClose}
           label="font"
         >
+            <MenuItem value="Arial" onMouseOver={(e) => handleMouseOver(e,"Arial")}>Arial</MenuItem>
           <MenuItem value="Caribri" onMouseOver={(e) => handleMouseOver(e,"Caribri")}>Caribri</MenuItem>
           <MenuItem value="cursive" onMouseOver={(e) => handleMouseOver(e,"cursive")}>Cursive</MenuItem>
           <MenuItem value="fangsong" onMouseOver={(e) => handleMouseOver(e,"fangsong")}>Fangsong</MenuItem>

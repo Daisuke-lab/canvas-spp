@@ -2,10 +2,11 @@ import React, {useEffect, useState, useRef} from 'react';
 import { Stage, Layer, Rect, Group, Text, Transformer, Line } from 'react-konva';
 import { useAppSelector, useAppDispatch } from '../helpers/hooks'
 import {closeMenu, openMenu, updateEnabledItems} from '../../store/reducers/canvasReducer'
-import {RowType, TableType, updateCurrentTable, updateTable} from '../../store/reducers/canvasReducer'
+import {RowType, TableType, updateCurrentTable, updateTable, addHistory} from '../../store/reducers/canvasReducer'
 import Row from './Row';
 import EditableText from './EditableText'
 import Border from './Border'
+import backendAxios from '../helpers/axios';
 
 
 export const defaultTitleHeight = 20
@@ -21,8 +22,10 @@ interface Props {
 }
 function ERDiagram(props:Props) {
     const {dispatch, state, table, stageRef} = props;
+    const historyStep = state.canvases.historyStep
     const tables = state?.canvases?.tables !== undefined ?state?.canvases?.tables:[]
-    const currentTable = state.canvases.currentTable
+    const currentTableId = state.canvases.currentTable?.id
+    const currentTable = tables.find((table) => table.id === currentTableId)
     const [initialLocation, setInitialLocation] = useState<{x:number,y:number}>({x: table.x, y:table.y})
     const tableIndex = tables.indexOf(table)
     const editingField = state.canvases.editingField
@@ -31,6 +34,11 @@ function ERDiagram(props:Props) {
     const currentRow = state.canvases.currentRow
     const erDiagramRef = useRef() as any
     const display = state.canvases.displayMenu.display
+
+
+    useEffect(() => {
+      setInitialLocation({x: table.x, y:table.y})
+    }, [historyStep])
     const handleRightClick = (event: any) => {
       const target = event.currentTarget
       console.log('erdiagram clicked')
@@ -44,19 +52,12 @@ function ERDiagram(props:Props) {
     const onClick = (event:any) => {
       console.log("erdiagram clicked")
 
-      //event.evt.preventDefault()
-      if (typeof event.preventDefault === "function") {
-        console.log('you are here')
-        event.preventDefault()
-      }
+
         const tr = trRef?.current
-        console.log(currentTable === table)
-        console.log(tr)
         if (currentTable !== table) {
           dispatch(updateCurrentTable(table))
         }
         if (tr !== undefined && tr !== null && currentTable === table) {
-          console.log('you are here')
             tr.nodes([erDiagramRef?.current])
         }
     }
@@ -83,8 +84,6 @@ function ERDiagram(props:Props) {
       }
       
     }
-    console.log(initialLocation)
-    console.log(table)
 
     const onTransform = (e:any) => {
       const position = e.target.position();
@@ -99,18 +98,42 @@ function ERDiagram(props:Props) {
         dispatch(updateTable(newTable))
       }
     }
+    const handleDragEnd = async (e:any) => {
+      
+      try {
+        const res = await backendAxios.put(`/api/v1/erDiagram/${currentTable.id}`, currentTable)
+        console.log(res.data)
+        dispatch(addHistory())
+      } catch(err) {
+        console.log(err)
+      }
+      
+    }
+
+    const onTransformEnd = async (e:any) => {
+      try {
+        const res = await backendAxios.put(`/api/v1/erDiagram/${currentTable.id}`, currentTable)
+        console.log(res)
+      } catch(err) {
+        console.log(err)
+      }
+    }
   return (<><Group 
         draggable={editingField?.tableIndex !== tableIndex && table.id === currentTable?.id}
         onContextMenu={handleRightClick}
         onDragMove={handleDragMove}
+        onDragEnd={handleDragEnd}
         ref={erDiagramRef}
         width={defaultErDiagramWidth}
         onTransform={onTransform}
+        onTransformEnd={onTransformEnd}
         height={defaultTitleHeight}
         onClick={onClick}
         id={table.id}
         x={initialLocation.x}
         y={initialLocation.y}
+        rotation={table.rotation}
+        scale={table.scale}
         >
           <Border targetRef={erDiagramRef} state={state} dispatch={dispatch} id={table.id}/>
         <EditableText

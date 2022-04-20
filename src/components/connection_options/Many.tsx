@@ -12,7 +12,6 @@ interface Props{
 
 function Many(props:Props) {
     const {anchorLocation,x, y} = props
-    console.log(anchorLocation)
     const getFirstPoints = () => {
         switch(anchorLocation) {
             case "top":

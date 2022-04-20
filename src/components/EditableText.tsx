@@ -31,11 +31,11 @@ function EditableText(props:Props) {
     const textRef = React.useRef() as any
     const tables = state.canvases.tables
     const [canvasTextProps, setCanvasTextProps] = useState<CanvasTextType>({
+      id: text.id,
       display: false,
       styles: {},
-      text: text.text
+      text: text.content
     })
-    console.log(text)
 
 
     useEffect(() => {
@@ -44,6 +44,10 @@ function EditableText(props:Props) {
           trRef?.current?.nodes([textRef.current]);
           //trRef?.current?.getLayer().batchDraw();
         }
+        setCanvasTextProps({
+          ...canvasTextProps,
+          text: text.content
+        })
       }, [props.isSelected]);
 
 
@@ -99,6 +103,7 @@ function EditableText(props:Props) {
           const styles = createStyles(textRef, erDiagramRef, stageRef, dispatch)
           setCanvasTextProps({
             ...canvasTextProps,
+            text: text.content,
             styles,
             display: true})
           const tableIndex = tables.indexOf(table)
@@ -112,18 +117,6 @@ function EditableText(props:Props) {
           }))
             break
       }
-      // if (props.isSelected) {
-      //   textRef?.current?.hide()
-      //   trRef?.current?.hide()
-      //   const styles = createStyles(textRef, stageRef)
-      //   setCanvasTextProps({
-      //     ...canvasTextProps,
-      //     styles,
-      //     display: true})
-      // } else {
-      //   console.log('onSelect')
-      //   props.onSelect()
-      // }
     }
 
 
@@ -137,7 +130,7 @@ function EditableText(props:Props) {
         draggable={props.transformable}
         onDragEnd={onDragEnd}
         onTransformEnd={onTransformEnd}
-        text={text.text}
+        text={text.content}
         fontFamily={text.style?.fontFamily}
         fill={text.style?.color}
         fontStyle={`${text.style?.fontStyle} ${text.style?.fontWeight}`.replaceAll('unset', "")}

@@ -26,7 +26,8 @@ import Form from 'react-bootstrap/Form'
 import dynamic from 'next/dynamic';
 import Divider from '@mui/material/Divider';
 import { useAppSelector, useAppDispatch } from '../../helpers/hooks'
-import { updateDefaultTextStyle, increaseDefaultFontSize, decreaseDefaultFontSize} from '../../../store/reducers/canvasReducer';
+import { updateDefaultTextStyle, increaseDefaultFontSize, decreaseDefaultFontSize,
+increaseHistoryStep, decreaseHistoryStep} from '../../../store/reducers/canvasReducer';
 import FontFamily from './FontFamily';
 import Color from './Color';
 const ConnectionTypeSelect = dynamic(() => import('../ConnectionTypeSelect'), { ssr: false });
@@ -43,9 +44,16 @@ const Item = styled(Paper)(({ theme }) => ({
 
 function EditingNavBar() {
     const defaultTextStyle = useAppSelector(state => state.canvases.defaultTextStyle)
+    const historyStep = useAppSelector(state => state.canvases.historyStep)
+    const history = useAppSelector(state => state.canvases.history)
     const dispatch = useAppDispatch()
     const fontSizeRef = useRef() as any
-    console.log(defaultTextStyle.fontSize)
+    console.log("fontsize in endting nav bar::", defaultTextStyle.fontSize)
+
+    useEffect(() => {
+        const input = fontSizeRef.current.getElementsByTagName("input")[0]
+        input.value = defaultTextStyle.fontSize
+    }, [])
 
 
 
@@ -124,16 +132,25 @@ function EditingNavBar() {
 
     }
 
+    const onUndo = () => {
+        dispatch(decreaseHistoryStep())
+        console.log(history)
+    }
+    const onRedo = () => {
+        dispatch(increaseHistoryStep())
+    }
+
 
 
 
   return (
     <Container className={styles.navOptionsContainer} style={{marginTop:"10px"}}>
         <Item className={styles.canvasOption}>
-            <IconButton>
+            <IconButton onClick={onUndo} disabled={historyStep === 0}>
         <ArrowBackIcon/>
         </IconButton>
-        <IconButton>
+
+        <IconButton onClick={onRedo} disabled={history.length === historyStep + 1 || history.length === 0}>
         <ArrowForwardIcon/>
         </IconButton>
         </Item>

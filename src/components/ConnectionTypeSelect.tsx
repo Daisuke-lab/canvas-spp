@@ -18,6 +18,9 @@ const ZeroOrMany = dynamic(() => import('./connection_select_options/ZeroOrMany'
 const ZeroOrOne = dynamic(() => import('./connection_select_options/ZeroOrOne'), {ssr: false})
 import { useAppSelector, useAppDispatch } from '../helpers/hooks'
 import { updateConnections, updateDefaultConnectionOption } from '../../store/reducers/canvasReducer';
+import backendAxios from '../helpers/axios';
+
+
 export const optionStageWidth = 40
 export const optionStageHeight = 30
 export const optionCanvasMargin = 3
@@ -40,7 +43,7 @@ function ConnectionTypeSelect(props:Props) {
         setOpen(true);
       };
 
-    const onClick = (connectionOption:ConnectionOptionType) => {
+    const onClick = async (connectionOption:ConnectionOptionType) => {
       console.log(currentConnectionId)
       if (currentConnectionId !== null) {
         const currentConnection = connections.find((connection) => connection.id === currentConnectionId)
@@ -50,6 +53,13 @@ function ConnectionTypeSelect(props:Props) {
           const newConnection = {
             ...currentConnection,
             [direction]: {...currentConnection[direction], connectionOption: connectionOption}
+          }
+
+          try {
+            const res = await backendAxios.put(`api/v1/connection/${newConnection.id}`, newConnection)
+            console.log(res)
+          } catch (err) {
+            console.log(err)
           }
           const index = connections.indexOf(currentConnection)
           const newConnections = [...connections]

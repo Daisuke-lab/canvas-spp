@@ -4,6 +4,7 @@ import 'bootstrap/dist/css/bootstrap.min.css';
 import ArchitectureIcon from '@mui/icons-material/Architecture';
 import styles from "../../../styles/Navbar.module.css"
 import EditingNavBar from './EditingNavBar'
+import File from './File'
 function NavBar() {
   return (
     <>
@@ -17,7 +18,7 @@ function NavBar() {
     </Container>
     <Container className={styles.navOptionsContainer}>
       <Nav.Item className={styles.navOption}>
-          File
+          <File/>
       </Nav.Item>
       <Nav.Item className={styles.navOption}>
           Edit

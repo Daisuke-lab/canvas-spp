@@ -56,7 +56,7 @@ export const createStyles = (textRef, erDiagramRef, stageRef, dispatch) => {
 }
 
 const insertIntoDefaultTextStyle = (styles:TextStyleType, dispatch:any) => {
-    console.log(styles.fontSize)
+    console.log("fontsize in createStyles::", styles.fontSize)
     const newDefaultTextStyle = {
         color: styles.color,
         fontWeight: styles.fontWeight,

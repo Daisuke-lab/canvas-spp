@@ -28,7 +28,6 @@ export default function Connection(props:Props) {
     const display = state.canvases.displayMenu.display
 
 
-
     const sourceTitleHeight = 20  *source.scale.y
     const sourceErDiagramWidth = 100 *source.scale.x
     const sourceRowHeight = 15  *source.scale.y
@@ -46,7 +45,7 @@ export default function Connection(props:Props) {
 
     let endX = 0
     let endY = 0
-    if (instanceofConnectionPoint(connection.destination)) {
+    if (connection.destination?.id !== null && connection.destination?.id !== undefined) {
         const destinationTitleHeight = 20  *destination.scale.y
         const destinationErDiagramWidth = 100 *destination.scale.x
         const destinationRowHeight = 15  *destination.scale.y
@@ -77,8 +76,9 @@ export default function Connection(props:Props) {
         //event?.preventDefault();
         console.log("line right clicked")
         if (!display) {
-            dispatch(openMenu({x: event.target.attrs.x, y:event.target.attrs.y}))
-          dispatch(updateEnabledItems(["delete-connection"]))
+            console.log(event.target)
+            dispatch(openMenu({x: event.target.attrs.points[0], y:event.target.attrs.points[1]}))
+            dispatch(updateEnabledItems(["delete-connection"]))
           }
 
 
@@ -187,39 +187,39 @@ export default function Connection(props:Props) {
 
     const [sourceMiddleX, sourceMiddleY] = middlePoint(connection.source.anchorLocation)
     const [destinationMiddleX, destinationMiddleY] = middlePoint(connection.destination?.anchorLocation)
-    const [points, setPoints] = useState<number[]>([0, 0,
-        sourceMiddleX, sourceMiddleY,
-        sourceMiddleX, endY - startY - destinationMiddleY,
-        endX - startX + destinationMiddleX, endY - startY - destinationMiddleY,
-        endX - startX, endY - startY - destinationMiddleY,
-        endX - startX, endY - startY])
+    const [points, setPoints] = useState<number[]>([startX, startY,
+        startX + sourceMiddleX, startY + sourceMiddleY,
+        startX + sourceMiddleX, endY - destinationMiddleY,
+        endX + destinationMiddleX, endY - destinationMiddleY,
+        endX, endY - destinationMiddleY,
+        endX, endY])
     useEffect(() => {
-        const newPoints = [0, 0,
-            sourceMiddleX, sourceMiddleY,
-            sourceMiddleX, endY - startY - destinationMiddleY,
-            endX - startX + destinationMiddleX, endY - startY - destinationMiddleY,
-            endX - startX, endY - startY - destinationMiddleY,
-            endX - startX, endY - startY]
+        const newPoints = [startX, startY,
+            startX + sourceMiddleX, startY + sourceMiddleY,
+            startX + sourceMiddleX, endY + destinationMiddleY,
+            endX + destinationMiddleX, endY + destinationMiddleY,
+            endX, endY + destinationMiddleY,
+            endX, endY]
         // if(connectionRef.current !== null) {
         //     avoidingCollisionPoint(newPoints)
         // }
         // newPoints.splice(6, 1, newPoints[4])
         // newPoints.splice(7, 1, newPoints[9])
         if (startY < endY) {
-            newPoints.splice(4, 1, endX - startX + destinationMiddleX)
-            newPoints.splice(5, 1, sourceMiddleY)
-            newPoints.splice(6, 1, endX - startX + destinationMiddleX)
-            newPoints.splice(7, 1, endY - startY - destinationMiddleY)
+            newPoints.splice(4, 1, endX + destinationMiddleX)
+            newPoints.splice(5, 1, startY + sourceMiddleY)
+            newPoints.splice(6, 1, endX + destinationMiddleX)
+            newPoints.splice(7, 1, endY + destinationMiddleY)
         }
         setPoints(newPoints)
-    }, [source,  display, endX])
+    }, [source,  display, endX, endY])
     return (
     <>
     {currentConnectionId === connection.id && connection !== null?
     <>
          <Line
-         x={startX}
-         y={startY}
+         x={0}
+         y={0}
          ref={connectionRef}
          points={points}
          stroke="skyblue"
@@ -229,8 +229,8 @@ export default function Connection(props:Props) {
          tension={0}
          onClick={onLineClick}/>
          <Line
-         x={startX}
-         y={startY}
+         x={0}
+         y={0}
          ref={connectionRef}
          points={points}
          stroke="white"
@@ -249,8 +249,8 @@ export default function Connection(props:Props) {
     />
             <Line
             id={connection.id}
-            x={startX}
-            y={startY}
+            x={0}
+            y={0}
             ref={connectionRef}
             points={points}
             stroke="#6F1D1B"
