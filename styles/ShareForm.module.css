@@ -1,0 +1,24 @@
+
+.ownerContainer {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 5px;
+    margin: 10px;
+    border-radius: 50px;
+}
+
+.ownerInfo {
+    display: flex;
+    align-items: center;
+}
+
+.ownerContainer:hover {
+    background-color: aliceblue
+}
+
+
+.buttonContainer {
+    width: 100%;
+    contain: content;
+}

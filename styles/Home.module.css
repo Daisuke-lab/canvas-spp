@@ -114,3 +114,30 @@
     flex-direction: column;
   }
 }
+
+
+.background img {
+  z-index: -1
+}
+
+.titleText {
+  font-size: 69px;
+  color: aliceblue;
+}
+
+.titleText span {
+  margin-left: 100px;
+}
+
+.startButton {
+  margin-right: 70%;
+  margin-left: auto;
+  font-size: 20px;
+  font-weight: bold;
+}
+
+.titleContainer {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+}

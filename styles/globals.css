@@ -14,3 +14,9 @@ a {
 * {
   box-sizing: border-box;
 }
+
+.form-modal-button-container {
+  margin-top: 30px;
+  display: flex;
+  justify-content: space-evenly;
+}

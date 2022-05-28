@@ -1,0 +1,15 @@
+.titleText {
+    display: flex;
+    justify-content: start;
+    align-items: center;
+}
+
+.imageContainer {
+    position: relative
+}
+
+.imageContainer button {
+    position: absolute;
+    right: 6px
+}
+

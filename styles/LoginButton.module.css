@@ -1,0 +1,22 @@
+.loginButton {
+  background: white;
+  border-radius: 50px;
+  width: 300px;
+  text-align: center;
+  display: flex;
+  align-items: center;
+  justify-content: start;
+}
+
+.iconImage {
+  margin-right: 10px;
+}
+
+.loginText {
+  flex: 1
+}
+
+.loginIconContainer {
+  margin-left: 40px;
+  margin-top: 2px;
+}

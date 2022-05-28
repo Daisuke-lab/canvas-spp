@@ -1,0 +1,43 @@
+.navOptionsContainer {
+    justify-content: start !important;
+    margin-left: 10px;
+}
+
+.navOption {
+    color: white;
+    margin-right: 20px;
+}
+
+.canvasOption {
+    margin-right: 10px;
+}
+
+.canvasOption > select {
+    height: 100%;
+    box-shadow: none;
+    border: none;
+}
+
+.navButton {
+    color: white
+}
+
+.navBar {
+    flex-wrap: wrap;
+}
+
+.navBarContainer {
+    margin-left: 10px;
+    justify-content: start !important
+}
+
+.navBarIcon {
+    color: white;
+    margin-right: 10px
+}
+
+.titleInput {
+    width: 200px;
+    background: white;
+    padding: 5px;
+}
