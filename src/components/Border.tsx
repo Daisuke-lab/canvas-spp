@@ -2,6 +2,8 @@ import React from 'react'
 import { Stage, Layer, Rect, Text, Line } from "react-konva";
 import Anchor from './Anchor'
 import {defaultTitleHeight, defaultErDiagramWidth, defaultRowHeight} from './ERDiagram'
+import { RootState, AppDispatch } from '../../store/store';
+
 interface CoordinateType {
      x: number,
      y: number,
@@ -10,23 +12,22 @@ interface CoordinateType {
 }
 
 interface Props {
-    targetRef: any,
-    state: any,
-    dispatch: any,
+    targetRef: React.RefObject<any>,
+    state: RootState,
+    dispatch: AppDispatch,
     id: string
 }
 function Border(props:Props) {
     const {targetRef, state, dispatch, id} = props
     //const absolutePosition = targetRef.current?.absolutePosition()
     const absolutePosition = {x:0,y:0}
+    const anchorDistance = 10
     const table = state.canvases.tables.find((table) => table.id === id)
     const titleHeight = defaultTitleHeight
     const erDiagramWidth = defaultErDiagramWidth
     const rowHeight = defaultRowHeight
-    const erDiagramHeight = titleHeight + rowHeight * table.rows.length
-    //console.log(table.scale.y)
-    //console.log(rowHeight)
-    //console.log(erDiagramHeight)
+    const rowLength  = table !== undefined?table.rows.length:0
+    const erDiagramHeight = titleHeight + rowHeight * rowLength
 
     const getX = (location:string) => {
         switch(location) {
@@ -88,6 +89,15 @@ function Border(props:Props) {
     const lineLocations = ["left", "right", "top", "bottom"]
     return (
         <>
+        <Line
+            key={`border-title-bottom-${id}`}
+            x={getX("top")}
+            y={getY("top") + titleHeight}
+            points={getPoints("top")}
+            stroke="black"
+            strokeWidth={1}
+            perfectDrawEnabled={false}
+          />
         {lineLocations.map((lineLocation, index) => {
             return (
             <>
@@ -96,12 +106,14 @@ function Border(props:Props) {
             x={getX(lineLocation)}
             y={getY(lineLocation)}
             points={getPoints(lineLocation)}
-            stroke="#432818"
+            stroke="black"
             strokeWidth={1}
             perfectDrawEnabled={false}
           />
+
           <Anchor {...getAnchorPoint(lineLocation)} state={state} dispatch={dispatch}
-          targetRef={targetRef} id={id} location={lineLocation}/>
+          targetRef={targetRef} id={id} location={lineLocation as "left"|"right"|"top"|"bottom"}/>
+          
           </>)
         })}
       </>

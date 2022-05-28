@@ -1,0 +1,13 @@
+.circleContainer {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 400px;
+}
+
+
+.roomPreviewContainer {
+    display: flex;
+    justify-content: space-around;
+    flex-wrap: wrap;
+}

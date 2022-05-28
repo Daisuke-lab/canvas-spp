@@ -46,14 +46,18 @@ function EditingNavBar() {
     const defaultTextStyle = useAppSelector(state => state.canvases.defaultTextStyle)
     const historyStep = useAppSelector(state => state.canvases.historyStep)
     const history = useAppSelector(state => state.canvases.history)
+    const editingTableIndex = useAppSelector(state => state.canvases.editingField?.tableIndex)
+    const tables = useAppSelector(state => state.canvases.tables)
+    const editingTable = editingTableIndex!==undefined?tables[editingTableIndex]:null 
+    //const [fontSize, setFontSize] = useState<number>(defaultTextStyle.fontSize)
     const dispatch = useAppDispatch()
     const fontSizeRef = useRef() as any
-    console.log("fontsize in endting nav bar::", defaultTextStyle.fontSize)
+    console.log(defaultTextStyle.textDecorationLine)
 
     useEffect(() => {
         const input = fontSizeRef.current.getElementsByTagName("input")[0]
         input.value = defaultTextStyle.fontSize
-    }, [])
+    }, [defaultTextStyle.fontSize])
 
 
 
@@ -62,12 +66,14 @@ function EditingNavBar() {
     const onIncreaseFontSize = () => {
         const textareas = document.getElementsByTagName('textarea')
         const textarea = textareas.length > 0?textareas[0]: null
-        console.log("you are here")
         dispatch(increaseDefaultFontSize())
         const input = fontSizeRef.current.getElementsByTagName("input")[0]
         input.value = parseInt(input.value) + 1 
-        if (textarea !== null) {
-            textarea.style.fontSize = input.value + "px"
+        if (textarea !== null && editingTable !== null) {
+            const scaleX = editingTable.scale.x
+            const scaleY = editingTable.scale.y
+            const fontScale = scaleX<scaleY?scaleX:scaleY
+            textarea.style.fontSize = parseFloat(input.value)*fontScale + "px"
         }
     }
 
@@ -77,8 +83,11 @@ function EditingNavBar() {
         dispatch(decreaseDefaultFontSize())
         const input = fontSizeRef.current.getElementsByTagName("input")[0]
         input.value = parseInt(input.value) - 1 
-        if (textarea !== null) {
-            textarea.style.fontSize = input.value + "px"
+        if (textarea !== null && editingTable !== null) {
+            const scaleX = editingTable.scale.x
+            const scaleY = editingTable.scale.y
+            const fontScale = scaleX<scaleY?scaleX:scaleY
+            textarea.style.fontSize = parseFloat(input.value)*fontScale + "px"
         }
     }
 
@@ -86,8 +95,11 @@ function EditingNavBar() {
         const textareas = document.getElementsByTagName('textarea')
         const textarea = textareas.length > 0?textareas[0]: null
         dispatch(updateDefaultTextStyle({...defaultTextStyle, fontSize: parseInt(e.target.value)}))
-        if (textarea !== null) {
-            textarea.style.fontSize = e.target.value + "px"
+        if (textarea !== null && editingTable !== null) {
+            const scaleX = editingTable.scale.x
+            const scaleY = editingTable.scale.y
+            const fontScale = scaleX<scaleY?scaleX:scaleY
+            textarea.style.fontSize = parseFloat(e.target.value) * fontScale + "px"
         }
     }
 
@@ -112,7 +124,7 @@ function EditingNavBar() {
     }
 
     const onUnderlineClick = () => {
-        const newTextDecorationLine = defaultTextStyle.textDecorationLine === "unset"?"underline":"unset"
+        const newTextDecorationLine = defaultTextStyle.textDecorationLine === "underline"?"unset":"underline"
         dispatch(updateDefaultTextStyle({...defaultTextStyle, textDecorationLine: newTextDecorationLine})) 
         const textareas = document.getElementsByTagName('textarea')
         const textarea = textareas.length > 0?textareas[0]: null
@@ -134,7 +146,6 @@ function EditingNavBar() {
 
     const onUndo = () => {
         dispatch(decreaseHistoryStep())
-        console.log(history)
     }
     const onRedo = () => {
         dispatch(increaseHistoryStep())

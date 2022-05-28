@@ -21,3 +21,23 @@
 .navButton {
     color: white
 }
+
+.navBar {
+    flex-wrap: wrap;
+}
+
+.navBarContainer {
+    margin-left: 10px;
+    justify-content: start !important
+}
+
+.navBarIcon {
+    color: white;
+    margin-right: 10px
+}
+
+.titleInput {
+    width: 200px;
+    background: white;
+    padding: 5px;
+}

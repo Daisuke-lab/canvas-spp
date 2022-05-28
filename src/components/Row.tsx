@@ -2,20 +2,24 @@ import React, {useEffect, useState, useRef} from 'react';
 import { Stage, Layer, Rect, Group, Text, Transformer, Line } from 'react-konva';
 import { useAppSelector, useAppDispatch } from '../helpers/hooks'
 import {closeMenu, openMenu, updateEnabledItems} from '../../store/reducers/canvasReducer'
-import {RowType, TableType, updateCurrentTable, updateCurrentRow} from '../../store/reducers/canvasReducer'
+import {updateCurrentTable, updateCurrentRow} from '../../store/reducers/canvasReducer'
+import {TableType, RowType} from "../../types"
 import EditableText from './EditableText'
 
+import { AppDispatch, RootState } from '../../store/store';
+import * as Konva from "konva"
+import CurrentRowDecoration from './CurrentRowDecoration';
 interface Props {
     index: number,
     table: TableType,
     titleHeight: number,
-    dispatch: any,
-    state: any,
+    dispatch: AppDispatch,
+    state: RootState,
     row: RowType,
-    stageRef: any,
+    stageRef: React.RefObject<Konva.default.Stage>,
     rowHeight: number,
     erDiagramWidth: number,
-    erDiagramRef: any
+    erDiagramRef: React.RefObject<Konva.default.Group>
 
 }
 
@@ -29,19 +33,17 @@ function Row(props:Props) {
     const onRowRightClick = (event: any) => {
       if (row === currentRow) {
         const target = event.currentTarget
-        console.log('row clicked')
         dispatch(openMenu({x: target.parent.attrs.x, y:target.parent.attrs.y}))
         dispatch(updateEnabledItems(["delete-row","add-row", "delete-table"]))
       }
     }
 
     const onClick = () => {
-      console.log("row clicked")
+      console.log('row clicked')
         if (table === currentTable && row !== currentRow) {
           dispatch(updateCurrentRow(row))
           dispatch(updateCurrentTable(table))
         } else if (table !== currentTable) {
-          console.log("you are updating table from row")
           dispatch(updateCurrentTable(table))
         }
     }
@@ -50,7 +52,7 @@ function Row(props:Props) {
           <Line
           x={0}
           y={rowHeight*(index+1) + titleHeight}
-          stroke="#432818"
+          stroke="black"
           strokeWidth={1}
           tension={1}
           points={[0,0, erDiagramWidth,0]}
@@ -59,13 +61,12 @@ function Row(props:Props) {
           <Line
           x={0}
           y={rowHeight*index + titleHeight}
-          stroke="#432818"
+          stroke="black"
           strokeWidth={1}
           tension={1}
           points={[0,0, 0,rowHeight]}
           />
           <EditableText
-          onSelect={onClick}
           isSelected={currentRow === row}
           text={row.key}
           field="key"
@@ -83,7 +84,7 @@ function Row(props:Props) {
             <Line
           x={fieldWidth}
           y={rowHeight*index + titleHeight}
-          stroke="#432818"
+          stroke="black"
           strokeWidth={1}
           tension={1}
           points={[0,0, 0,rowHeight]}
@@ -91,24 +92,12 @@ function Row(props:Props) {
             <Line
           x={fieldWidth * 2}
           y={rowHeight*index + titleHeight}
-          stroke="#432818"
+          stroke="black"
           strokeWidth={1}
           tension={1}
           points={[0,0, 0,rowHeight]}
           />
-          {currentRow === row?
-          <Rect 
-          stroke="#99582A"
-          strokeWidth={1.2}
-          zIndex={15}
-          x={0}
-          y={rowHeight*index + titleHeight}
-          width={erDiagramWidth}
-          height={rowHeight}
-          />
-          :<></>}
           <EditableText
-            onSelect={onClick}
             isSelected={currentRow === row}
             text={row.value}
             field="value"
@@ -123,6 +112,14 @@ function Row(props:Props) {
             row={row}
             table={table}
             />
+            {currentRow === row?
+          <CurrentRowDecoration
+          x={0}
+          y={rowHeight*(index) + titleHeight}
+          erDiagramWidth={erDiagramWidth}
+          rowHeight={rowHeight}
+          />
+          :<></>}
         </Group>
   )
 }

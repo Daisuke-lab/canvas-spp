@@ -8,10 +8,11 @@ import CustomMenu from './CustomMenu';
 import {addRow, openMenu, updateEnabledItems, resetCurrentSelection} from "../../store/reducers/canvasReducer"
 import ConnectionPreview from './ConnectionPreview'
 import Connection from './Connection'
-import { StarRateTwoTone } from '@mui/icons-material';
+import * as Konva from 'konva'
+
+
 function Conva() {
-    const [selectedId, setSelectedId] = useState<string>('')
-    const stageRef = React.useRef<HTMLCanvasElement>()
+    const stageRef = React.useRef<Konva.default.Stage>(null)
     const dispatch = useAppDispatch()
     const state = useAppSelector(state => state)
     const tables = useAppSelector(state => state.canvases.tables)
@@ -20,18 +21,19 @@ function Conva() {
     const connectionPreview = useAppSelector(state => state.canvases.connectionPreview)
     const handleRightClick = (event:any) => {
       event?.preventDefault();
-      console.log("this is event in conva")
       if (!display) {
         dispatch(openMenu({x: event.clientX, y:event.clientY}))
       dispatch(updateEnabledItems(["add-table", "delete-table"]))
       }
   }
 
-  const onClick = (event:any) => {
-    console.log('div clicked')
-  }
+    useEffect(() => {
+      console.log("/////////////////////////////////////////")
+      console.log(stageRef.current?.toDataURL())
+    }, [])
+
     return (
-      <div  onContextMenu={handleRightClick} id="canvas-container"   onClick={onClick}>
+      <div  onContextMenu={handleRightClick} id="canvas-container">
         <Stage width={window.innerWidth} height={window.innerHeight} ref={stageRef}>
       <Layer>
         {/* <EditableText key={`ERDiagram-${1}`}

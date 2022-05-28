@@ -14,7 +14,6 @@ const [anchorEl, setAnchorEl] = React.useState<null | HTMLElement>(null);
   };
 
   const handleMouseOver = (e:React.MouseEvent) => {
-    console.log(e.target)
   }
 
   const onSave = () => {

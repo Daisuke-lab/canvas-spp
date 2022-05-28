@@ -1,8 +1,15 @@
 import { StyleOutlined } from "@mui/icons-material";
-import { TextStyleType, updateDefaultTextStyle } from "../../store/reducers/canvasReducer";
-export const createStyles = (textRef, erDiagramRef, stageRef, dispatch) => {
+import {updateDefaultTextStyle } from "../../store/reducers/canvasReducer";
+import TextStyleType from "../../types/TextStyleType";
+import * as Konva from "konva"
+import { AppDispatch } from "../../store/store";
+export const createStyles = (textRef:React.RefObject<Konva.default.Text>,
+                             erDiagramRef:React.RefObject<Konva.default.Group>,
+                             stageRef:React.RefObject<Konva.default.Stage>,
+                             dispatch:AppDispatch) => {
     const styles:any = {}
-    const textPosition = textRef.current.absolutePosition();
+    if (textRef.current !== null && stageRef.current !== null && erDiagramRef.current!== null) {
+        const textPosition = textRef.current.absolutePosition();
 
 
     // so position of textarea will be the sum of positions above:
@@ -36,8 +43,6 @@ export const createStyles = (textRef, erDiagramRef, stageRef, dispatch) => {
     styles.textAlign = textRef.current.align();
     styles.color = textRef.current.fill();
     const scale = erDiagramRef.current.scale();
-    console.log(textRef.current)
-    console.log(textRef.current.parent.scale())
 
 
     const rotation = erDiagramRef.current.rotation();
@@ -50,18 +55,19 @@ export const createStyles = (textRef, erDiagramRef, stageRef, dispatch) => {
 
     styles.transform = transform;
     insertIntoDefaultTextStyle(styles, dispatch)
+    }
+    
 
     return styles
 
 }
 
-const insertIntoDefaultTextStyle = (styles:TextStyleType, dispatch:any) => {
-    console.log("fontsize in createStyles::", styles.fontSize)
+const insertIntoDefaultTextStyle = (styles:any, dispatch:any) => {
     const newDefaultTextStyle = {
         color: styles.color,
         fontWeight: styles.fontWeight,
         fontStyle: styles.fontStyle,
-        fontSize: parseInt(styles.fontSize as string),
+        fontSize: parseInt(styles.fontSize.replaceAll("px", "")),
         fontFamily: styles.fontFamily,
         textDecorationLine: styles.textDecorationLine,
         textAlign: styles.textAlign

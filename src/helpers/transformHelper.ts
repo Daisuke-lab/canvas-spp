@@ -1,4 +1,4 @@
-import { AnchorLocationType } from "../../store/reducers/canvasReducer"
+import { AnchorLocationType } from "../../types"
 
 export const getR = (anchorLocation:AnchorLocationType, width:number, height:number) => {
     const r = "bottom" === anchorLocation?Math.sqrt((width/2)**2 + (height)**2)

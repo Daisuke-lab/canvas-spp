@@ -4,9 +4,8 @@ import {useEffect} from 'react'
 //import type { RootState, AppDispatch } from '../../store/store'
 
 //const store = dynamic(() => import('../../store/store'), { ssr: false });
-import store from '../../store/store'
-type RootState = ReturnType<typeof store.getState>
-type AppDispatch = typeof store.dispatch
+import store, {AppDispatch, RootState} from '../../store/store'
+
 
 
 export const useAppDispatch = () => useDispatch<AppDispatch>()

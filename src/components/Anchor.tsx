@@ -1,18 +1,25 @@
 import { getLocationOrigin } from 'next/dist/shared/lib/utils';
 import React, {useEffect, useState, useRef} from 'react'
 import { Line, Circle } from "react-konva";
-import {updateConnectionPreview, addConnection, updateCurrentConnectionId} from '../../store/reducers/canvasReducer'
-import uuid from 'react-uuid'
-import { ConnectionOptionType } from '../GlobalType';
+import * as Konva from "konva"
+import {updateConnectionPreview, addConnection, updateCurrentConnection} from '../../store/reducers/canvasReducer'
+import { v4 as uuid } from 'uuid';
+import {ConnectionOptionType, CustomSessionType} from '../../types'
 import {getR, getRotation} from '../helpers/transformHelper'
 import { ScaleSharp } from '@mui/icons-material';
-import backendAxios from '../helpers/axios';
+import backendAxios from '../helpers/getAxios';
+import { useRouter } from 'next/router'
+import { RootState, AppDispatch } from '../../store/store';
+import { useSession } from 'next-auth/react';
+import getAxios from '../helpers/getAxios';
+
+
 interface Props {
     x: any,
     y: any,
-    state: any,
-    dispatch: any,
-    targetRef: any,
+    state: RootState,
+    dispatch: AppDispatch,
+    targetRef: React.RefObject<any>,
     id: string,
     location: "top" | "bottom" | "right" | "left"
 }
@@ -24,10 +31,17 @@ interface DestinationType {
 }
 function Anchor(props:Props) {
     const {x, y, dispatch, state, targetRef, id, location} = props
-    const anchorRef = useRef<any>(null);
+    const anchorRef = useRef<Konva.default.Circle>(null)
     const currentConnectionPreview = state.canvases.connectionPreview
     const defaultConnectionOption = state.canvases.defaultConnectionOption
     const [destination, setDestination] = useState<DestinationType | null>(null)
+    const roomId = state.canvases.currentRoom?.id
+    const session = state.users.session
+    const axios = getAxios(session as CustomSessionType | null)
+
+  
+
+
     const dragBounds = () => {
         if (anchorRef.current !== null) {
           return anchorRef.current.getAbsolutePosition();
@@ -42,7 +56,8 @@ function Anchor(props:Props) {
     const titleHeight = 20  *scale.y
     const erDiagramWidth = 100 *scale.x
     const rowHeight = 15  *scale.y
-    const erDiagramHeight = titleHeight + rowHeight * table.rows.length
+    const rowLength  = table !== undefined?table.rows.length:0
+    const erDiagramHeight = titleHeight + rowHeight * rowLength
 
     // const r = "bottom" === location?Math.sqrt((erDiagramWidth/2)**2 + (erDiagramHeight)**2)
     // :location==="top"?(erDiagramWidth/2)
@@ -65,15 +80,11 @@ function Anchor(props:Props) {
     const handleAnchorDragStart = (e:any) => {
         const position = e.target.position();
         const absolutePosition = targetRef.current?.absolutePosition()
-        console.log(targetRef.current?.rotation())
-        console.log(rotation)
-        //console.log("anchorX*cosTheta::", anchorX*cosTheta)
         const connectionPreview = {
             source: {id, anchorLocation: location, connectionOption: defaultConnectionOption.source},
             destination: {x: position.x, y: position.y, connectionOption: defaultConnectionOption.destination
             }
         }
-        console.log(connectionPreview)
         dispatch(updateConnectionPreview(connectionPreview))
     }
     const handleAnchorDragMove = (e:any) => {
@@ -106,14 +117,15 @@ function Anchor(props:Props) {
         ...currentConnectionPreview,
         source: {id, x: absolutePosition?.x, y: absolutePosition?.y, anchorLocation: location, connectionOption: defaultConnectionOption.source},
         destination:finalDestination,
-        id: connectionId
+        id: connectionId,
+        roomId: roomId
         }
         try {
-          const res = await backendAxios.post("/api/v1/connection", connectionPreview)
+          const res = await axios.post("/api/v1/connection", connectionPreview)
           console.log(res)
-          dispatch(addConnection(connectionPreview))
+          //dispatch(addConnection(connectionPreview))
           dispatch(updateConnectionPreview(null))
-          dispatch(updateCurrentConnectionId(connectionId))
+          dispatch(updateCurrentConnection(connectionPreview))
         } catch (err) {
           console.log(err)
         }
@@ -129,20 +141,17 @@ function Anchor(props:Props) {
       const detectCollision = (layer:any, target:any) => {
         layer.find(`.connectable`).forEach(function (group:any) {
           // do not check intersection with itself
-          if (group.parent.attrs.name === table.id) {
+          if (group.parent.attrs.name === table?.id) {
             return;
           }
           // && group.nodeType === "Group"
           if (haveIntersection(group, target)) {
             //group.scale({x:2, y:2})
-            console.log("you detected collision")
-            console.log(group)
             const name = group.attrs.name
             const location = name.includes("right")?"right":
                         name.includes("left")?"left":
                         name.includes("top")?"top":
                         "bottom"
-            console.log("destination::", {id: group.parent.attrs.id, location: location})
             setDestination({id: group.parent.attrs.id, anchorLocation: location, connectionOption: defaultConnectionOption.destination})
             group.fill('yellow');
           } else {

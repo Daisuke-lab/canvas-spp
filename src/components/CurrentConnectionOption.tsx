@@ -8,7 +8,7 @@ const OnlyOne = dynamic(() => import('./connection_select_options/OnlyOne'), {ss
 const ZeroOrMany = dynamic(() => import('./connection_select_options/ZeroOrMany'), {ssr: false})
 const ZeroOrOne = dynamic(() => import('./connection_select_options/ZeroOrOne'), {ssr: false})
 import { useAppSelector, useAppDispatch } from '../helpers/hooks'
-import { ConnectionOptionType } from '../GlobalType';
+import { ConnectionOptionType } from '../../types/ConnectionOptionType';
 
 
 interface Props {
@@ -19,9 +19,7 @@ function CurrentConnectionOption(props:Props) {
   const defaultConnectionOption = useAppSelector(state => state.canvases.defaultConnectionOption)
   const currentConnectionId = useAppSelector(state => state.canvases.currentConnectionId)
   const connections = useAppSelector(state => state.canvases.connections)
-  const currentConnection = connections.find((connection) => connection.id === currentConnectionId) !== undefined?
-  connections.find((connection) => connection.id === currentConnectionId):
-  {source: {connectionOption: "normal"}, destination: {connectionOption: "normal"}}
+  const currentConnection = connections.find((connection) => connection.id === currentConnectionId)
 
 
   const getCurrentConnectionOption = (option:ConnectionOptionType) => {
@@ -46,9 +44,9 @@ function CurrentConnectionOption(props:Props) {
   }
   return (
     <>
-    {currentConnectionId === null?
+    {currentConnection === undefined?
     getCurrentConnectionOption(defaultConnectionOption[direction]):
-    getCurrentConnectionOption(currentConnection[direction].connectionOption)}
+    getCurrentConnectionOption(currentConnection[direction].connectionOption as ConnectionOptionType)}
     </>
   )
 }

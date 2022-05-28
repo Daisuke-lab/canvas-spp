@@ -6,7 +6,7 @@ import ClickAwayListener from '@mui/material/ClickAwayListener';
 import Typography from '@mui/material/Typography';
 import KeyboardArrowDownIcon from '@mui/icons-material/KeyboardArrowDown';
 import { Stage, Layer, Rect, Text, Circle, Line } from 'react-konva';
-import { ConnectionOptionType } from '../GlobalType';
+import { ConnectionOptionType } from '../../types/ConnectionOptionType';
 import CurrentConnectionOption from './CurrentConnectionOption';
 import dynamic from 'next/dynamic';
 const Normal = dynamic(() => import('./connection_select_options/Normal'), {ssr: false})
@@ -17,8 +17,12 @@ const OnlyOne = dynamic(() => import('./connection_select_options/OnlyOne'), {ss
 const ZeroOrMany = dynamic(() => import('./connection_select_options/ZeroOrMany'), {ssr: false})
 const ZeroOrOne = dynamic(() => import('./connection_select_options/ZeroOrOne'), {ssr: false})
 import { useAppSelector, useAppDispatch } from '../helpers/hooks'
-import { updateConnections, updateDefaultConnectionOption } from '../../store/reducers/canvasReducer';
-import backendAxios from '../helpers/axios';
+import { updateConnection, updateDefaultConnectionOption } from '../../store/reducers/canvasReducer';
+import backendAxios from '../helpers/getAxios';
+import { useSession } from 'next-auth/react';
+import getAxios from '../helpers/getAxios';
+import { CustomSessionType } from '../../types';
+import { CAN_EDIT, OWNER } from '../../types/PermissionType';
 
 
 export const optionStageWidth = 40
@@ -32,9 +36,13 @@ function ConnectionTypeSelect(props:Props) {
     const [open, setOpen] = useState<boolean>(false)
     const [disabled, setDisabled] = useState<boolean>(false)
     const defaultConnectionOption = useAppSelector(state => state.canvases.defaultConnectionOption)
-    const currentConnectionId = useAppSelector(state => state.canvases.currentConnectionId)
+    const currentConnection = useAppSelector(state => state.canvases.currentConnection)
     const connections = useAppSelector(state => state.canvases.connections)
+    const currentPermission = useAppSelector(state => state.canvases.currentPermission)
+    const canEdit = [OWNER, CAN_EDIT].includes(currentPermission)
     const dispatch = useAppDispatch()
+    const { data: session } = useSession()
+    const axios = getAxios(session as CustomSessionType | null)
     const handleTooltipClose = () => {
         setOpen(false);
       };
@@ -44,28 +52,20 @@ function ConnectionTypeSelect(props:Props) {
       };
 
     const onClick = async (connectionOption:ConnectionOptionType) => {
-      console.log(currentConnectionId)
-      if (currentConnectionId !== null) {
-        const currentConnection = connections.find((connection) => connection.id === currentConnectionId)
-        console.log(currentConnectionId)
-        if (currentConnection !== undefined) {
-          console.log('you are here')
+      if (currentConnection !== null) {
           const newConnection = {
             ...currentConnection,
             [direction]: {...currentConnection[direction], connectionOption: connectionOption}
           }
 
           try {
-            const res = await backendAxios.put(`api/v1/connection/${newConnection.id}`, newConnection)
+            const res = await axios.put(`api/v1/connection/${newConnection.id}`, newConnection)
             console.log(res)
           } catch (err) {
             console.log(err)
           }
-          const index = connections.indexOf(currentConnection)
-          const newConnections = [...connections]
-          newConnections.splice(index, 1, newConnection)
-          dispatch(updateConnections(newConnections))
-        }
+          //dispatch(updateConnection(newConnection))
+        
       } else {
         const newDefaultConnectionOption = {
           ...defaultConnectionOption,
@@ -81,10 +81,10 @@ function ConnectionTypeSelect(props:Props) {
             <div>
               <Tooltip
                 PopperProps={{
-                  disablePortal: true,
+                  disablePortal: true
                 }}
                 onClose={handleTooltipClose}
-                open={open}
+                open={open && canEdit}
                 disableFocusListener
                 disableHoverListener
                 disableTouchListener

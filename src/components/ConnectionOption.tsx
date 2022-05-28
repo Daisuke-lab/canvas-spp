@@ -1,6 +1,5 @@
 import React from 'react'
-import { AnchorLocationType } from '../../store/reducers/canvasReducer'
-import { ConnectionOptionType } from '../GlobalType';
+import { ConnectionOptionType, AnchorLocationType } from "../../types"
 import One from './connection_options/One'
 import Many from './connection_options/Many'
 import OnlyOne from './connection_options/OnlyOne'

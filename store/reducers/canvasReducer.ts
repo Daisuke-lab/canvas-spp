@@ -1,51 +1,15 @@
 
 import { ConnectWithoutContactSharp } from '@mui/icons-material'
 import { createSlice, PayloadAction } from '@reduxjs/toolkit'
-import { ConnectionOptionType } from '../../src/GlobalType'
-import backendAxios from '../../src/helpers/axios'
-export interface TextStyleType {
-    fontFamily?: string
-    fontSize? : number,
-    fontWeight?: "unset" | "bold",
-    fontStyle?: "unset" | "italic",
-    textDecorationLine?: "unset" | "underline",
-    textAlign?: "unset" | "left" | "center" | "right",
-    color?: string
-}
-export interface TextType {
-    id: string,
-    content: string,
-    style: TextStyleType
-    
-    
-}
-export interface RowType {
-    key: TextType,
-    value: TextType,
-    id: string
-}
+import backendAxios from '../../src/helpers/getAxios'
+import { RoomType, TableType, RowType, ConnectionOptionType,  TextStyleType,
+ConnectionType, TableConnectionType, PermissionType} from '../../types'
+import { NO_PERMISSION } from '../../types/PermissionType'
 
-export interface TableType {
-    rows: RowType[],
-    id: string,
-    title: TextType,
-    x: number,
-    y: number,
-    rotation: number,
-    scale: {x: number, y:number}
-}
 
-export type AnchorLocationType = "top" | "bottom" | "left" | "right"
-export interface ConnectionPointType {
-    id: string,
-    anchorLocation: AnchorLocationType,
-    connectionOption: ConnectionOptionType
-}
-export interface ConnectionType {
-    source: ConnectionPointType,
-    destination: {x:number, y:number, connectionOption: ConnectionOptionType} | ConnectionPointType,
-    id: string
-}
+
+
+
 interface StateType {
     history: {tables: TableType[], connections: ConnectionType[]}[]
     historyStep: number,
@@ -58,7 +22,9 @@ interface StateType {
     enabledItems: string[],
     currentTable: TableType | null,
     currentRow: RowType | null,
-    currentConnectionId: null | string,
+    currentConnection: ConnectionType | null,
+    currentRoom: RoomType | null,
+    currentPermission: PermissionType,
     editingField: {text: string, field:string, tableIndex:number, rowIndex:number} | null,
     connectionPreview: ConnectionType | null,
     connections: ConnectionType[],
@@ -83,7 +49,9 @@ const initialState:StateType = {
     enabledItems: [],
     currentTable: null,
     currentRow:  null,
-    currentConnectionId: null,
+    currentConnection: null,
+    currentRoom: null,
+    currentPermission: NO_PERMISSION,
     editingField: null,
     connectionPreview: null,
     connections: [],
@@ -116,7 +84,7 @@ export const canvasSlice = createSlice({
       closeMenu: (state) => {
           state.displayMenu.display = false
           state.currentTable = null
-          state.currentConnectionId = null
+          state.currentConnection = null
       },
 
       setTables: (state, action) => {
@@ -127,9 +95,10 @@ export const canvasSlice = createSlice({
       },
       addRow: (state, action) => {
           const newTables = state.tables.filter(table => table.id !== state.currentTable?.id)
-          if (state.currentTable !== null) {
-            state.currentTable.rows = [...state.currentTable.rows, action.payload]
-            state.tables = [...newTables, state.currentTable]
+          const currentTable = state.tables.find(table => table.id === state.currentTable?.id)
+          if (currentTable !== undefined) {
+            currentTable.rows = [...currentTable.rows, action.payload]
+            state.tables = [...newTables, currentTable]
           }
           state.displayMenu.display = false
           state.history = [...state.history, {tables: state.tables, connections:state.connections}]
@@ -152,9 +121,11 @@ export const canvasSlice = createSlice({
           state.history = [...state.history, {tables: state.tables, connections:state.connections}]
           state.historyStep += 1
       },
-      deleteTable: (state) => {
-          state.connections = state.connections.filter((connection) => connection.source.id !== state.currentTable?.id && connection.destination?.id !== state.currentTable?.id)
-          state.tables = state.tables.filter((table) => table.id !== state.currentTable?.id)
+      deleteTable: (state, action) => {
+          const deletingTable = action.payload
+          state.connections = state.connections.filter((connection) => connection.source.id !== deletingTable?.id && 
+          (connection.destination as TableConnectionType)?.id !== deletingTable?.id)
+          state.tables = state.tables.filter((table) => table.id !== deletingTable?.id)
           state.currentTable = null
           state.displayMenu.display = false
           state.history = [...state.history, {tables: state.tables, connections:state.connections}]
@@ -173,21 +144,23 @@ export const canvasSlice = createSlice({
       updateCurrentRow: (state, action) => {
           state.currentRow = action.payload
       },
-      updateCurrentConnectionId: (state, action) => {
-          state.currentConnectionId = action.payload
+      updateCurrentConnection: (state, action) => {
+          state.currentConnection = action.payload
       },
-      deleteConnection: (state) => {
-          const newConnections = state.connections.filter((connection) => connection.id !== state.currentConnectionId)
+      deleteConnection: (state, action) => {
+          const newConnections = state.connections.filter((connection) => connection.id !== action.payload.id)
           state.connections = [...newConnections]
-          state.currentConnectionId = null
+          
           state.displayMenu.display = false
           state.history = [...state.history, {tables: state.tables, connections:state.connections}]
           state.historyStep += 1
+          if (action.payload.id === state.currentConnection?.id) {
+            state.currentConnection = null
+          }
       },
       updateText: (state, action) => {
           const field = action.payload.field
           const newText = action.payload.text
-          console.log({text:newText})
           const textId = action.payload.id
           const tableIndex = action.payload.tableIndex
           const rows = action.payload.rows
@@ -198,12 +171,14 @@ export const canvasSlice = createSlice({
           if (editingTable !== undefined) {
             switch(field) {
                 case "title":
-                    editingTable.title = {style:state.defaultTextStyle, content: newText, id:textId}
+                    editingTable.title = {style:state.defaultTextStyle, content: newText, id:textId,
+                    updatedBy: action.payload.updatedBy}
                     state.tables = [...newTables, editingTable]
                     break
                 case "key":
                     if (editingRow !== null) {
-                        editingRow.key = {style:state.defaultTextStyle, content: newText, id: textId}
+                        editingRow.key = {style:state.defaultTextStyle, content: newText, id: textId,
+                            updatedBy: action.payload.updatedBy}
                         const newRows = [...rows]
                         newRows.splice(rowIndex, 1, editingRow)
                         editingTable.rows = newRows
@@ -212,7 +187,8 @@ export const canvasSlice = createSlice({
                     }
                 case "value":
                     if (editingRow !== null) {
-                        editingRow.value = {style:state.defaultTextStyle, content: newText, id: textId}
+                        editingRow.value = {style:state.defaultTextStyle, content: newText, id: textId,
+                            updatedBy: action.payload.updatedBy}
                         const newRows = [...rows]
                         newRows.splice(rowIndex, 1, editingRow)
                         editingTable.rows = newRows
@@ -242,16 +218,22 @@ export const canvasSlice = createSlice({
           const tables = state.tables.filter((table)=> table.id !== action.payload.id)
           state.tables = [...tables, action.payload]
       },
+      updateTableWithHistoryStep: (state, action) => {
+        const tables = state.tables.filter((table)=> table.id !== action.payload.id)
+        state.tables = [...tables, action.payload]
+        state.historyStep += 1
+      },
       resetCurrentSelection: (state) => {
           state.currentTable = null
           state.currentRow = null
-          state.currentConnectionId = null
+          state.currentConnection = null
       },
       updateDefaultConnectionOption: (state, action) => {
           state.defaultConnectionOption = action.payload
       },
-      updateConnections: (state, action) => {
-          state.connections = action.payload
+      updateConnection: (state, action) => {
+          const otherConnections = state.connections.filter(connection => connection.id !== action.payload.id)
+          state.connections = [...otherConnections, action.payload]
           state.history = [...state.history, {tables: state.tables, connections:state.connections}]
           state.historyStep += 1
       },
@@ -260,29 +242,37 @@ export const canvasSlice = createSlice({
       },
 
       increaseDefaultFontSize: (state) => {
-          state.defaultTextStyle.fontSize += 1
+          if (state.defaultTextStyle?.fontSize !== undefined) {
+            state.defaultTextStyle.fontSize += 1
+          }
+          
       },
       decreaseDefaultFontSize: (state) => {
-          state.defaultTextStyle.fontSize -= 1
+        if (state.defaultTextStyle?.fontSize !== undefined) {
+            state.defaultTextStyle.fontSize -= 1
+          }
       },
       increaseHistoryStep: (state) => {
           state.historyStep += 1
-          console.log(state.historyStep)
           const currentHistory = state.history[state.historyStep]
           state.tables = currentHistory.tables
           state.connections = currentHistory.connections
       },
       decreaseHistoryStep: (state) => {
         state.historyStep -= 1
-        console.log(state.historyStep)
         const currentHistory = state.history[state.historyStep]
-        console.log(currentHistory.tables.length)
         state.tables = currentHistory.tables
         state.connections = currentHistory.connections
     },
     addHistory: (state) => {
         state.history = [...state.history, {tables: state.tables, connections: state.connections}]
         state.historyStep += 1
+    },
+    updateCurrentRoom: (state, action) => {
+        state.currentRoom = action.payload
+    },
+    setCurrentPermission: (state, action) => {
+        state.currentPermission = action.payload
     }
     },
     
@@ -292,9 +282,10 @@ export const canvasSlice = createSlice({
   export const {openMenu, closeMenu, addRow, updateEnabledItems, addTable, deleteTable,
                 updateCurrentTable, updateCurrentRow, deleteRow, updateText, updateEditingField,
                 resetEditingField, updateConnectionPreview, addConnection, updateTable,
-                updateCurrentConnectionId, deleteConnection, resetCurrentSelection,
-                updateDefaultConnectionOption, updateConnections, updateDefaultTextStyle,
+                updateCurrentConnection, deleteConnection, resetCurrentSelection,
+                updateDefaultConnectionOption, updateConnection, updateDefaultTextStyle,
                 increaseDefaultFontSize, decreaseDefaultFontSize, setTables, setConnections,
-                increaseHistoryStep, decreaseHistoryStep, addHistory} = canvasSlice.actions
+                increaseHistoryStep, decreaseHistoryStep, addHistory, updateCurrentRoom,
+                updateTableWithHistoryStep, setCurrentPermission} = canvasSlice.actions
   
   export default canvasSlice.reducer

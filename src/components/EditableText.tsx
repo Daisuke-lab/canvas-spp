@@ -3,32 +3,39 @@ import React, {useRef, useEffect, useState} from 'react'
 import { Stage, Layer, Shape, Transformer, Rect, Text, KonvaNodeComponent} from 'react-konva';;
 import { Html } from 'react-konva-utils';
 import CanvasText, {CanvasTextType} from './CanvasText'
-import {RefType} from '../GlobalType'
 import {createStyles} from '../helpers/createStyles'
-import {updateEditingField, updateText, TextStyleType, TextType} from '../../store/reducers/canvasReducer'
-import uuid from 'react-uuid'
+import {updateEditingField, updateText} from '../../store/reducers/canvasReducer'
+import { TextType, RowType } from '../../types';
+import { v4 as uuid } from 'uuid';
+import * as Konva from "konva"
+import { RootState, AppDispatch } from '../../store/store';
+import TableType from '../../types/TableType';
+import { CAN_EDIT, OWNER } from '../../types/PermissionType';
+
+
 interface Props {
     isSelected: boolean,
-    stageRef: any,
+    stageRef: React.RefObject<Konva.default.Stage>,
     transformable: boolean,
     text: TextType,
-    dispatch: any,
+    dispatch: AppDispatch,
     field: string,
-    state: any,
+    state: RootState,
     x: number,
     y: number,
     width: number,
     height: number,
-    erDiagramRef: any,
-    row: any,
-    table: any
+    erDiagramRef: React.RefObject<Konva.default.Group>,
+    row: RowType | null,
+    table: TableType
 }
 
 function EditableText(props:Props) {
     const {text, dispatch, field, state, stageRef, x, y, width, height, erDiagramRef,
     row, table} = props
-    const trRef = useRef() as any
-    const textRef = React.useRef() as any
+    const currentPermission = state.canvases.currentPermission
+    const trRef = useRef<Konva.default.Transformer>(null)
+    const textRef = useRef<Konva.default.Text>(null)
     const tables = state.canvases.tables
     const [canvasTextProps, setCanvasTextProps] = useState<CanvasTextType>({
       id: text.id,
@@ -41,7 +48,10 @@ function EditableText(props:Props) {
     useEffect(() => {
         if (props.isSelected) {
           // we need to attach transformer manually
-          trRef?.current?.nodes([textRef.current]);
+          if (textRef.current !== null) {
+            trRef?.current?.nodes([textRef.current]);
+          }
+          
           //trRef?.current?.getLayer().batchDraw();
         }
         setCanvasTextProps({
@@ -75,48 +85,53 @@ function EditableText(props:Props) {
             // but in the store we have only width and height
             // to match the data better we will reset scale on transform end
             const node = textRef?.current;
-            const scaleX = node.scaleX();
-            const scaleY = node.scaleY();
-  
-            // we will reset it back
-            node.scaleX(1);
-            node.scaleY(1);
-            setTextOptions({
-                ...textOptions,
-              x: node.x(),
-              y: node.y(),
-              // set minimal value
-              width: Math.max(5, node.width() * scaleX),
-              height: Math.max(node.height() * scaleY),
-            })
+            if (node !== null) {
+              const scaleX = node.scaleX();
+              const scaleY = node.scaleY();
+    
+              // we will reset it back
+              node.scaleX(1);
+              node.scaleY(1);
+              setTextOptions({
+                  ...textOptions,
+                x: node.x(),
+                y: node.y(),
+                // set minimal value
+                width: Math.max(5, node.width() * scaleX),
+                height: Math.max(node.height() * scaleY),
+              })
+            }
+            
     }
 
     const onClick = (e:any) => {
-      console.log('it clicked in EditableText')
-      switch (e.evt.detail) {
-        case 1:
-          //props.onSelect(e)
-          break
-        case 2:
-          textRef?.current?.hide()
-          trRef?.current?.hide()
-          const styles = createStyles(textRef, erDiagramRef, stageRef, dispatch)
-          setCanvasTextProps({
-            ...canvasTextProps,
-            text: text.content,
-            styles,
-            display: true})
-          const tableIndex = tables.indexOf(table)
-          const rowIndex = field !== "title"?table.rows.indexOf(row):null
-          dispatch(updateEditingField({
-            rowIndex,
-            tableIndex,
-            text,
-            field: field,
-            rows: table.rows
-          }))
+      if ([OWNER, CAN_EDIT].includes(currentPermission)) {
+        switch (e.evt.detail) {
+          case 1:
+            //props.onSelect(e)
             break
+          case 2:
+            textRef?.current?.hide()
+            trRef?.current?.hide()
+            const styles = createStyles(textRef, erDiagramRef, stageRef, dispatch)
+            setCanvasTextProps({
+              ...canvasTextProps,
+              text: text.content,
+              styles,
+              display: true})
+            const tableIndex = tables.indexOf(table)
+            const rowIndex = field !== "title"?table.rows.indexOf(row as RowType):null
+            dispatch(updateEditingField({
+              rowIndex,
+              tableIndex,
+              text,
+              field: field,
+              rows: table.rows
+            }))
+              break
+        }
       }
+      
     }
 
 
@@ -134,7 +149,7 @@ function EditableText(props:Props) {
         fontFamily={text.style?.fontFamily}
         fill={text.style?.color}
         fontStyle={`${text.style?.fontStyle} ${text.style?.fontWeight}`.replaceAll('unset', "")}
-        fontSize={text.style?.fontSize}
+        fontSize={text.style?.fontSize !== undefined ?text.style?.fontSize:10}
         textDecoration={text.style?.textDecorationLine}
         align={text.style?.textAlign}
       />
@@ -147,11 +162,10 @@ function EditableText(props:Props) {
       row={row}
       table={table}
       />
-          {props.isSelected && props.transformable && (
+          {props.isSelected && props.transformable && [OWNER, CAN_EDIT].includes(currentPermission) && (
             <Transformer
               ref={trRef}
               boundBoxFunc={(oldBox, newBox) => {
-                console.log(newBox)
                 // limit resize
                 if (newBox.width < 5 || newBox.height < 5) {
                   return oldBox;

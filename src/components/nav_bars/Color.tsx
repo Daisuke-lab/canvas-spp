@@ -15,7 +15,6 @@ function Color() {
     const dispatch = useAppDispatch()
 
     const handleTooltipClose = (e:any) => {
-        console.log(e)
         setOpen(false);
       };
     

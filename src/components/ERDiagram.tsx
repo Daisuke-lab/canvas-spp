@@ -1,13 +1,17 @@
 import React, {useEffect, useState, useRef} from 'react';
 import { Stage, Layer, Rect, Group, Text, Transformer, Line } from 'react-konva';
 import { useAppSelector, useAppDispatch } from '../helpers/hooks'
-import {closeMenu, openMenu, updateEnabledItems} from '../../store/reducers/canvasReducer'
-import {RowType, TableType, updateCurrentTable, updateTable, addHistory} from '../../store/reducers/canvasReducer'
+import {closeMenu, openMenu, updateCurrentRoom, updateEnabledItems} from '../../store/reducers/canvasReducer'
+import {updateCurrentTable, updateTable, addHistory} from '../../store/reducers/canvasReducer'
 import Row from './Row';
 import EditableText from './EditableText'
 import Border from './Border'
-import backendAxios from '../helpers/axios';
-
+import backendAxios from '../helpers/getAxios';
+import { RootState, AppDispatch } from '../../store/store';
+import {CustomSessionType, TableType} from "../../types"
+import { useSession } from 'next-auth/react';
+import getAxios from '../helpers/getAxios';
+import { CAN_EDIT, OWNER } from '../../types/PermissionType';
 
 export const defaultTitleHeight = 20
 export const defaultErDiagramWidth = 100
@@ -15,8 +19,8 @@ export const defaultRowHeight = 15
 
 
 interface Props {
-    dispatch: any,
-    state: any,
+    dispatch: AppDispatch,
+    state: RootState,
     table: TableType,
     stageRef: any
 }
@@ -26,6 +30,9 @@ function ERDiagram(props:Props) {
     const tables = state?.canvases?.tables !== undefined ?state?.canvases?.tables:[]
     const currentTableId = state.canvases.currentTable?.id
     const currentTable = tables.find((table) => table.id === currentTableId)
+    const currentPermission = state.canvases.currentPermission
+    const currentRoom = state.canvases.currentRoom
+    const canEdit = [CAN_EDIT, OWNER].includes(currentPermission)
     const [initialLocation, setInitialLocation] = useState<{x:number,y:number}>({x: table.x, y:table.y})
     const tableIndex = tables.indexOf(table)
     const editingField = state.canvases.editingField
@@ -34,14 +41,18 @@ function ERDiagram(props:Props) {
     const currentRow = state.canvases.currentRow
     const erDiagramRef = useRef() as any
     const display = state.canvases.displayMenu.display
+    const session = state.users.session
+    const axios = getAxios(session as CustomSessionType | null)
+    const [hovered, setHovered] = useState<boolean>(false)
+
 
 
     useEffect(() => {
       setInitialLocation({x: table.x, y:table.y})
+      console.log("history step changed")
     }, [historyStep])
     const handleRightClick = (event: any) => {
       const target = event.currentTarget
-      console.log('erdiagram clicked')
         if (!display && table === currentTable && currentRow === null) {
         dispatch(openMenu({x: target.attrs.x, y:target.attrs.y}))
         dispatch(updateEnabledItems(["add-row", "copy", "delete-table"]))
@@ -50,7 +61,6 @@ function ERDiagram(props:Props) {
     }
 
     const onClick = (event:any) => {
-      console.log("erdiagram clicked")
 
 
         const tr = trRef?.current
@@ -92,7 +102,8 @@ function ERDiagram(props:Props) {
         x: position.x,
         y: position.y,
         scale: erDiagramRef.current.scale(),
-        rotation: erDiagramRef.current.rotation()
+        rotation: erDiagramRef.current.rotation(),
+        updatedBy: session?.id
       }
       if (table.id === currentTable?.id && connectionPreview === null) {
         dispatch(updateTable(newTable))
@@ -101,10 +112,19 @@ function ERDiagram(props:Props) {
     const handleDragEnd = async (e:any) => {
       
       try {
-        const res = await backendAxios.put(`/api/v1/erDiagram/${currentTable.id}`, currentTable)
-        console.log(res.data)
+        const res = await axios.put(`/api/v1/erDiagram/${currentTable?.id}`, currentTable)
+        console.log(res)
         dispatch(addHistory())
       } catch(err) {
+        console.log(err)
+      }
+
+      try {
+        const newRoom = {...currentRoom, previewImg: stageRef.current?.toDataURL()}
+        const res = await axios.put(`/api/v1/room/${currentRoom?.id}`, newRoom)
+        dispatch(updateCurrentRoom(newRoom))
+        console.log(res)
+      } catch (err) {
         console.log(err)
       }
       
@@ -112,14 +132,21 @@ function ERDiagram(props:Props) {
 
     const onTransformEnd = async (e:any) => {
       try {
-        const res = await backendAxios.put(`/api/v1/erDiagram/${currentTable.id}`, currentTable)
+        const res = await axios.put(`/api/v1/erDiagram/${currentTable?.id}`, currentTable)
         console.log(res)
       } catch(err) {
         console.log(err)
       }
+      try {
+        const newRoom = {...currentRoom, previewImg: stageRef.current?.toDataURL()}
+        const res = await axios.put(`/api/v1/room/${currentRoom?.id}`, newRoom)
+        console.log(res)
+      } catch (err) {
+        console.log(err)
+      }
     }
   return (<><Group 
-        draggable={editingField?.tableIndex !== tableIndex && table.id === currentTable?.id}
+        draggable={editingField?.tableIndex !== tableIndex && table.id === currentTable?.id && canEdit}
         onContextMenu={handleRightClick}
         onDragMove={handleDragMove}
         onDragEnd={handleDragEnd}
