@@ -19,6 +19,17 @@
 
 
 .buttonContainer {
+    margin-top: 20px;
     width: 100%;
     contain: content;
+}
+
+.smallSelect {
+    font-size: 5px;
+    display: flex;
+    align-items: center;
+}
+
+.selectContainer legend {
+    width: 0
 }

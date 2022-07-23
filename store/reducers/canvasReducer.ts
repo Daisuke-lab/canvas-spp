@@ -1,10 +1,12 @@
 
 import { ConnectWithoutContactSharp } from '@mui/icons-material'
 import { createSlice, PayloadAction } from '@reduxjs/toolkit'
+import { NO_PERMISSION } from '../../src/constant'
 import backendAxios from '../../src/helpers/getAxios'
 import { RoomType, TableType, RowType, ConnectionOptionType,  TextStyleType,
 ConnectionType, TableConnectionType, PermissionType} from '../../types'
-import { NO_PERMISSION } from '../../types/PermissionType'
+
+
 
 
 
@@ -19,6 +21,8 @@ interface StateType {
         x: number,
         y: number
     },
+    connections: ConnectionType[],
+    rooms: RoomType[],
     enabledItems: string[],
     currentTable: TableType | null,
     currentRow: RowType | null,
@@ -27,7 +31,6 @@ interface StateType {
     currentPermission: PermissionType,
     editingField: {text: string, field:string, tableIndex:number, rowIndex:number} | null,
     connectionPreview: ConnectionType | null,
-    connections: ConnectionType[],
     defaultConnectionOption: {
         source: ConnectionOptionType,
         destination: ConnectionOptionType
@@ -46,6 +49,7 @@ const initialState:StateType = {
         x: 0,
         y: 0
     },
+    rooms:[],
     enabledItems: [],
     currentTable: null,
     currentRow:  null,
@@ -271,6 +275,22 @@ export const canvasSlice = createSlice({
     updateCurrentRoom: (state, action) => {
         state.currentRoom = action.payload
     },
+    setRooms: (state, action) => {
+        state.rooms = action.payload
+    },
+    updateRoom: (state, action) => {
+        const roomIds = state.rooms.map(room => room.id)
+        const index = roomIds.indexOf(action.payload.id)
+        if (index !== -1) {
+            const newRooms = [...state.rooms]
+            newRooms.splice(index, 1, action.payload)
+            state.rooms = newRooms
+        } else {
+            state.rooms = [...state.rooms, action.payload]
+        }
+        //const newRooms = state.rooms.filter(room => room.id !== action.payload.id)
+    },
+
     setCurrentPermission: (state, action) => {
         state.currentPermission = action.payload
     }
@@ -286,6 +306,6 @@ export const canvasSlice = createSlice({
                 updateDefaultConnectionOption, updateConnection, updateDefaultTextStyle,
                 increaseDefaultFontSize, decreaseDefaultFontSize, setTables, setConnections,
                 increaseHistoryStep, decreaseHistoryStep, addHistory, updateCurrentRoom,
-                updateTableWithHistoryStep, setCurrentPermission} = canvasSlice.actions
+                updateTableWithHistoryStep, setCurrentPermission, setRooms, updateRoom} = canvasSlice.actions
   
   export default canvasSlice.reducer

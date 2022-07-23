@@ -52,7 +52,6 @@ function EditingNavBar() {
     //const [fontSize, setFontSize] = useState<number>(defaultTextStyle.fontSize)
     const dispatch = useAppDispatch()
     const fontSizeRef = useRef() as any
-    console.log(defaultTextStyle.textDecorationLine)
 
     useEffect(() => {
         const input = fontSizeRef.current.getElementsByTagName("input")[0]

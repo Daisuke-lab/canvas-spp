@@ -4,6 +4,7 @@ import Tab from '@mui/material/Tab';
 import Typography from '@mui/material/Typography';
 import Box from '@mui/material/Box';
 import RoomsPreview from '../../src/components/RoomsPreview'
+import { OWNED_BY_YOU, RECENT, STARRED } from '../constant';
 
 interface TabPanelProps {
   children?: React.ReactNode;
@@ -49,19 +50,19 @@ export default function RoomsTabs() {
     <Box sx={{ width: '100%' }}>
       <Box sx={{ borderBottom: 1, borderColor: 'divider' }}>
         <Tabs value={value} onChange={handleChange} aria-label="basic tabs example">
-          <Tab label="Recent" {...a11yProps(0)} style={{textTransform: "none"}}/>
-          <Tab label="Starred" {...a11yProps(1)} style={{textTransform: "none"}} />
-          <Tab label="Recommended" {...a11yProps(2)} style={{textTransform: "none"}} />
+          <Tab label={RECENT} {...a11yProps(0)} style={{textTransform: "none"}}/>
+          <Tab label={STARRED} {...a11yProps(1)} style={{textTransform: "none"}} />
+          <Tab label={OWNED_BY_YOU} {...a11yProps(2)} style={{textTransform: "none"}} />
         </Tabs>
       </Box>
       <TabPanel value={value} index={0}>
-        <RoomsPreview type="recent"/>
+        <RoomsPreview tabName={RECENT}/>
       </TabPanel>
       <TabPanel value={value} index={1}>
-      <RoomsPreview type="starred"/>
+      <RoomsPreview tabName={STARRED}/>
       </TabPanel>
       <TabPanel value={value} index={2}>
-      <RoomsPreview type="recommended"/>
+      <RoomsPreview tabName={OWNED_BY_YOU}/>
       </TabPanel>
     </Box>
   );

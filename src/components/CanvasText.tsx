@@ -39,7 +39,6 @@ function CanvasText(props:Props) {
     const scales = transform?.split(/\(|\)/) ??[]
     const session = state.users.session
     const axios = getAxios(session as CustomSessionType | null)
-    console.log(textRef.current?.getStage())
 
     
     let scaleX = null

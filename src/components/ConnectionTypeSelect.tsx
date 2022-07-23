@@ -22,7 +22,7 @@ import backendAxios from '../helpers/getAxios';
 import { useSession } from 'next-auth/react';
 import getAxios from '../helpers/getAxios';
 import { CustomSessionType } from '../../types';
-import { CAN_EDIT, OWNER } from '../../types/PermissionType';
+import { CAN_EDIT, OWNER } from '../constant';
 
 
 export const optionStageWidth = 40

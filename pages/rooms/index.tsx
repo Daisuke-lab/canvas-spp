@@ -1,4 +1,4 @@
-import React from 'react'
+import React, { useEffect } from 'react'
 import type { NextPage } from 'next'
 import Layout from '../../src/components/Layout'
 import RoomsTabs from '../../src/components/RoomsTabs'
@@ -7,24 +7,34 @@ import AddIcon from '@mui/icons-material/Add';
 import getAxios from '../../src/helpers/getAxios'
 import { useRouter } from 'next/router'
 import { useSession,getSession } from "next-auth/react"
-import { RoomType } from '../../types';
+import { RoomType, UserType } from '../../types';
 import { getToken } from "next-auth/jwt"
 import {CustomSessionType} from "../../types"
+import { RESTRICTED } from '../../src/constant';
+import { setCurrentUser } from '../../store/reducers/userReducer';
+import { useAppDispatch } from '../../src/helpers/hooks';
 const secret = process.env.NEXTAUTH_SECRET
 
+interface Props {
+  user: UserType | null
+}
 const Rooms: NextPage = (props) =>  {
+  const {user} = props as Props
   const router = useRouter()
+  const dispatch = useAppDispatch()
   const { data: session } = useSession()
   const axios = getAxios(session as CustomSessionType | null)
-  console.log(session)
-  //console.log(document.cookie)
+  useEffect(() => {
+    dispatch(setCurrentUser(user))
+  }, [])
 
   const onCreate = async () => {
     const room = {
         title: "Untitled",
-        starred: false,
-        ownerId: session?.id,
-        canEdit: [session?.id]
+        owners: [session?.id],
+        canEdit: [],
+        canRead: [],
+        shareStatus: RESTRICTED
     }
     try {
         const res = await axios.post("/api/v1/room", room)
@@ -50,11 +60,20 @@ const Rooms: NextPage = (props) =>  {
   )
 }
 export async function getServerSideProps(context:any) {
-  const token = await getToken({ req:context.req, secret })
-  const session = await getSession({req:context.req})
+  const session = await getSession(context)
+  const axios = getAxios(session as CustomSessionType | null)
+  let user:UserType | null= null
+  try {
+    const res = await axios.get(`/api/v1/user/${session?.id}`)
+    user = res.data
+  } catch (err) {
+    console.log(err)
+  }
   
   return {
-    props:{}
+    props:{
+      user
+    }
   }
 
 }

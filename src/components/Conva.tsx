@@ -27,11 +27,6 @@ function Conva() {
       }
   }
 
-    useEffect(() => {
-      console.log("/////////////////////////////////////////")
-      console.log(stageRef.current?.toDataURL())
-    }, [])
-
     return (
       <div  onContextMenu={handleRightClick} id="canvas-container">
         <Stage width={window.innerWidth} height={window.innerHeight} ref={stageRef}>
@@ -43,9 +38,7 @@ function Conva() {
           }}
         stageRef={stageRef}
         /> */}
-        {tables.map((table, index) => (
-          <ERDiagram dispatch={dispatch} state={state} key={`er-diagram-${table.id}`} 
-          table={table} stageRef={stageRef}/>))}
+        
       {connectionPreview !== null?
       <ConnectionPreview state={state} dispatch={dispatch}/>
       :<></>
@@ -53,6 +46,9 @@ function Conva() {
       {connections.map((connection, index) => (
         <Connection connection={connection} dispatch={dispatch} state={state} key={`connection-${index}`}/>
       ))}
+      {tables.map((table, index) => (
+          <ERDiagram dispatch={dispatch} state={state} key={`er-diagram-${table.id}`} 
+          table={table} stageRef={stageRef}/>))}
       </Layer>
     </Stage>
     <CustomMenu/>

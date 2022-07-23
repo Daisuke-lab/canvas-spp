@@ -1,3 +1,6 @@
+import { ANYONE_CAN_EDIT, ANYONE_CAN_READ, RESTRICTED } from "../src/constant"
+import ShareStatusType from "./ShareStatusType"
+
 
 export interface RoomType {
     id: string,
@@ -5,11 +8,10 @@ export interface RoomType {
     previewImg: string,
     createdAt: Date,
     updatedAt: Date,
-    starred: boolean,
-    shareStatus?: "anyEdit" | "anyRead" | "specifiedRead" | "specifiedEdit",
-    canRead?: string[],
-    canEdit?: string[],
-    ownerId: string 
+    shareStatus: ShareStatusType
+    canRead: string[],
+    canEdit: string[],
+    owners: string[] 
 }
 
 export default RoomType

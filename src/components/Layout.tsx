@@ -1,4 +1,4 @@
-import React from 'react'
+import React, {useState} from 'react'
 import AppBar from '@mui/material/AppBar';
 import Box from '@mui/material/Box';
 import Toolbar from '@mui/material/Toolbar';
@@ -12,13 +12,17 @@ import FormGroup from '@mui/material/FormGroup';
 import MenuItem from '@mui/material/MenuItem';
 import Menu from '@mui/material/Menu';
 import ArchitectureIcon from '@mui/icons-material/Architecture';
-import { useSession } from 'next-auth/react';
 import Avatar from '@mui/material/Avatar';
+import { useSession, signIn, signOut } from "next-auth/react"
+import LoginModal from './LoginModal';
+
+
 function Layout(props:any) {
 
     const [auth, setAuth] = React.useState(true);
     const [anchorEl, setAnchorEl] = React.useState<null | HTMLElement>(null);
     const { data: session } = useSession()
+    const [open, setOpen] = useState<boolean>(false)
   
     const handleChange = (event: React.ChangeEvent<HTMLInputElement>) => {
       setAuth(event.target.checked);
@@ -80,9 +84,11 @@ function Layout(props:any) {
                 open={Boolean(anchorEl)}
                 onClose={handleClose}
               >
-                <MenuItem onClick={handleClose}>Profile</MenuItem>
-                <MenuItem onClick={handleClose}>My account</MenuItem>
+                {session !== null?
+                <MenuItem onClick={() => signOut()}>Sign Out</MenuItem>
+                :<MenuItem onClick={() => setOpen(true)}>Sign In</MenuItem>}
               </Menu>
+              {open?<LoginModal open={open} setOpen={setOpen}/>:<></>}
             </div>
           )}
         </Toolbar>

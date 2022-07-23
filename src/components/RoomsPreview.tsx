@@ -7,35 +7,52 @@ import backendAxios from '../helpers/getAxios';
 import { useSession,getSession } from "next-auth/react"
 import getAxios from '../helpers/getAxios';
 import { CustomSessionType } from '../../types';
+import { OWNED_BY_YOU, RECENT, RESTRICTED, STARRED } from '../constant';
+import { useAppDispatch, useAppSelector } from '../helpers/hooks';
+import { setRooms } from '../../store/reducers/canvasReducer';
+import TabType from '../../types/TabType';
 
 interface Props {
-    type: "recent" | "starred" | "recommended"
+    tabName: TabType
 }
-const room = {
-    title: "Test Title",
-    previewImg: "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQ5bBPoxV61LcgYmwLhno1_pw_xIM6gDyYHeg&usqp=CAU",
-    starred: false,
-    created_at: new Date(),
-    updated_at: new Date()
 
-}
 
 function RoomsPreview(props:Props) {
-    const [rooms, setRooms] = useState<RoomType[] | null>(null)
+    //const [rooms, setRooms] = useState<RoomType[] | null>(null)
+    const {tabName} = props
     const { data: session } = useSession()
+    const rooms = useAppSelector(state => state.canvases.rooms)
+    const dispatch = useAppDispatch()
     const axios = getAxios(session as CustomSessionType | null)
+    const currentUser = useAppSelector(state => state.users.currentUser)
+    const DUMMY_STARRED_ROOM_IDS = "fafearerearearea"
     useEffect(() => {
         getRooms()
-    }, [])
+    }, [tabName, session])
 
     const getRooms = async () => {
+        let endpoint;
+        switch(tabName) {
+            case RECENT:
+                endpoint = `api/v1/history`
+                break;
+            case STARRED:
+                const starredRoomIds = currentUser !== null && currentUser.starredRoomIds.length > 0 ? currentUser.starredRoomIds: DUMMY_STARRED_ROOM_IDS
+                endpoint = `api/v1/room/list?id=${starredRoomIds}`
+                break;
+            case OWNED_BY_YOU:
+                endpoint = `api/v1/room/list?owners=${session?.id}`
+                break;
+            default:
+                endpoint = `api/v1/room/list?owners=${session?.id}`
+        }
         try {
-            const res = await axios.get(`api/v1/room/list/${session?.id}`)
+            const res = await axios.get(endpoint)
             console.log(res)
-            setRooms(res.data)
+            dispatch(setRooms(res.data))
         } catch(err) {
             console.log(err)
-            setRooms([])
+            dispatch(setRooms([]))
         }
     }
     return (

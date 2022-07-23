@@ -20,13 +20,17 @@ import getAxios from '../../src/helpers/getAxios';
 import reflectTableChange from '../../src/helpers/reflectTableChange';
 import reflectConnectionChange from '../../src/helpers/reflectConnectionChange';
 import ErrorDialog from "../../src/components/ErrorDialog"
-import { CAN_EDIT, CAN_READ, NO_PERMISSION, OWNER } from '../../types/PermissionType';
+import { CAN_EDIT, CAN_READ, NO_PERMISSION, OWNER } from '../../src/constant';
+import hasAccessToRoom from '../../src/helpers/hasAccessToRoom';
+import getCurrentPermission from '../../src/helpers/getCurrentPermission';
+import PermissionType from '../../types/PermissionType';
 
 
 interface Props {
   tables: TableType[]
   connections: ConnectionType[],
-  currentRoom: RoomType
+  currentRoom: RoomType,
+  permission: PermissionType
 }
 const SOCKET_URL = 'http://localhost:8000/ws-message';
 
@@ -47,27 +51,39 @@ const Room: NextPage = (props) => {
   let handleClose = () => {
     setErrorDialogOpen(false)
     if (currentPermission === NO_PERMISSION) {
-      router.push("/rooms")
+      //router.push("/rooms")
     }
   }
 
+  
 
   useEffect(() => {
-    if (currentRoom?.ownerId === session?.id) {
-      dispatch(setCurrentPermission(OWNER))
-    } else if (currentRoom?.canEdit !== undefined && currentRoom?.canEdit?.includes(session?.id as string)) {
-      dispatch(setCurrentPermission(CAN_EDIT))
-    } else if (currentRoom?.canRead !== undefined && currentRoom?.canRead?.includes(session?.id as string)) {
-      dispatch(setCurrentPermission(CAN_READ))
-      setTitle("Warning")
-      setErrorText("your access level to this room is limited. You can't edit the content.")
-      setErrorDialogOpen(true)
-    } else {
-      setTitle("Permission Error")
-      setErrorText("you don't have any permission to this room. please contact your owner to provide you permission")
-      setErrorDialogOpen(true)
-      dispatch(setCurrentPermission(NO_PERMISSION))
+    const permission = getCurrentPermission(currentRoom, session as null | CustomSessionType)
+    console.log(currentRoom)
+    console.log(session)
+    console.log({permission})
+    switch(permission) {
+      case CAN_READ:
+        setTitle("Warning")
+        setErrorText("your access level to this room is limited. You can't edit the content.")
+        setErrorDialogOpen(true)
+        break;
+      case NO_PERMISSION:
+        setTitle("Permission Error / Not Found")
+        setErrorText("you don't have any permission to this room or the room does not exist.")
+        setErrorDialogOpen(true)
+        break;
+      default:
+        break;
     }
+    dispatch(setCurrentPermission(permission))
+  }, [session, currentRoom])
+
+
+  useEffect(() => {
+    dispatch(updateCurrentRoom(currentRoom))
+    dispatch(setTables(tables))
+    dispatch(setConnections(connections))
   }, [])
 
   
@@ -84,24 +100,20 @@ const Room: NextPage = (props) => {
             reflectConnectionChange(state, dispatch, msg)
         }
       }
-  useEffect(() => {
-    dispatch(updateCurrentRoom(currentRoom))
-  dispatch(setTables(tables))
-  dispatch(setConnections(connections))
-  }, [])
+
   
   return (
     <div>
       <NavBar/>
-      {currentPermission !== NO_PERMISSION?
+      {currentPermission !== NO_PERMISSION && currentPermission !== undefined?
       <Conva/>:<></>}
       <SockJsClient
         url={SOCKET_URL}
         topics={[`/user/${roomId}/erDiagrams`, `/user/${roomId}/connections`]}
-        onConnect={console.log("Connected")}
-        onDisconnect={console.log("Disconnected!")}
+        // onConnect={console.log("Connected")}
+        // onDisconnect={console.log("Disconnected!")}
         onMessage={(msg:any) => onMessageReceived(msg)}
-        debug={true}
+        //debug={true}
         ref={clientRef}
       />
       <ErrorDialog open={errorDialogOpen} setOpen={setErrorDialogOpen} text={errorText} handleClose={handleClose}
@@ -111,7 +123,8 @@ const Room: NextPage = (props) => {
 }
 
 export async function getServerSideProps(context:any) {
-  const session = await getSession({ req:context.ref })
+  const session = await getSession(context)
+  console.log({session})
   const axios = getAxios(session as CustomSessionType | null)
   const roomId = context.params.id
   let tables:TableType[] = []
@@ -138,6 +151,11 @@ export async function getServerSideProps(context:any) {
     console.log(err)
   }
 
+  // if (!hasAccessToRoom(currentRoom, session as CustomSessionType | null)) {
+  //   return { redirect: {permanent: false,
+  //     destination: '/'} }
+  // }
+  
   return {
     props: {
       tables,

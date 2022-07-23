@@ -10,7 +10,7 @@ import { v4 as uuid } from 'uuid';
 import * as Konva from "konva"
 import { RootState, AppDispatch } from '../../store/store';
 import TableType from '../../types/TableType';
-import { CAN_EDIT, OWNER } from '../../types/PermissionType';
+import { CAN_EDIT, OWNER } from '../constant';
 
 
 interface Props {
@@ -105,6 +105,8 @@ function EditableText(props:Props) {
     }
 
     const onClick = (e:any) => {
+      console.log("editableText clicked")
+      console.log([OWNER, CAN_EDIT])
       if ([OWNER, CAN_EDIT].includes(currentPermission)) {
         switch (e.evt.detail) {
           case 1:
@@ -130,6 +132,8 @@ function EditableText(props:Props) {
             }))
               break
         }
+      } else {
+        console.log("you do not have permission")
       }
       
     }

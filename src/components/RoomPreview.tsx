@@ -29,9 +29,10 @@ import DeleteForm from './DeleteForm';
 import { useSession } from 'next-auth/react';
 import { useAppSelector, useAppDispatch } from '../helpers/hooks'
 import getAxios from '../helpers/getAxios';
-import { CustomSessionType } from '../../types';
-import ShareForm from "./nav_bars/ShareForm"
-import { updateCurrentRoom } from '../../store/reducers/canvasReducer';
+import { CustomSessionType, UserType } from '../../types';
+import ShareForm from "./ShareForm"
+import { updateCurrentRoom, updateRoom } from '../../store/reducers/canvasReducer';
+import { setCurrentUser } from '../../store/reducers/userReducer';
 
 
 interface Props {
@@ -39,24 +40,27 @@ interface Props {
 }
 
 function RoomPreview(props:Props) {
-    const [room, setRoom] = useState<RoomType>(props.room)
+    const {room} = props
     const [deleteOpen, setDeleteOpen] = useState<boolean>(false)
     const [shareOpen, setShareOpen] = useState<boolean>(false)
     const router = useRouter()
     const { data: session } = useSession()
+    const user = session?.user as UserType
     const dispatch = useAppDispatch()
     const axios = getAxios(session as CustomSessionType | null)
-
-    const onStarred = async () => {
+    const currentUser = useAppSelector(state => state.users.currentUser)
+    const onStarred = async (add:boolean) => {
+        console.log({add})
         
-        const newRoom = {
-            ...room,
-            starred: !room.starred
-        }
         try {
-            const res = await axios.put(`/api/v1/room/${room.id}`, newRoom)
+            let res;
+            if (add) {
+                res = await axios.put(`/api/v1/user/add_star/${room.id}`)
+            } else {
+                res = await axios.put(`/api/v1/user/remove_star/${room.id}`)
+            }
             console.log(res)
-            setRoom(res.data)
+            dispatch(setCurrentUser(res.data))
         } catch(err) {
             console.log(err)
         }
@@ -76,8 +80,8 @@ function RoomPreview(props:Props) {
         <Card sx={{ width: 400 }}>
 
         <div className={styles.imageContainer}>
-            <IconButton onClick={onStarred}>
-                {room.starred?
+            <IconButton onClick={() => onStarred(!currentUser?.starredRoomIds?.includes(room.id))}>
+                {currentUser?.starredRoomIds?.includes(room.id)?
                 <StarIcon color="inherit" style={{color: yellow[700]}}/>
                 :<StarBorderIcon color="inherit" style={{color: yellow[700]}}/>
                 }

@@ -9,7 +9,7 @@ import getAxios from '../helpers/getAxios';
 import { useRouter } from 'next/router'
 import { useSession,getSession } from "next-auth/react"
 import { CustomSessionType } from '../../types';
-import { CAN_EDIT, OWNER } from '../../types/PermissionType';
+import { CAN_EDIT, OWNER, RESTRICTED } from '../constant';
 
 
 
@@ -51,7 +51,7 @@ const tableData = {
     rotation: 0,
     scale: {x:1,y:1},
     roomId: roomId,
-    updatedBy: session?.id
+    updatedBy: session?.id,
 }
 
 const rowData = {

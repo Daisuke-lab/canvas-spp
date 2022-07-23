@@ -48,7 +48,7 @@ function Row(props:Props) {
         }
     }
   return (
-    <Group onContextMenu={onRowRightClick} onClick={onClick}>
+    <Group onContextMenu={onRowRightClick} onClick={onClick} id={row.id}>
           <Line
           x={0}
           y={rowHeight*(index+1) + titleHeight}

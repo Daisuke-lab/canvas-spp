@@ -13,8 +13,8 @@ import { useSession } from 'next-auth/react';
 import getAxios from '../../helpers/getAxios';
 import { CustomSessionType } from '../../../types';
 import Button from '@mui/material/Button';
-import ShareForm from './ShareForm';
-import { CAN_EDIT, OWNER } from '../../../types/PermissionType';
+import ShareForm from '../ShareForm';
+import { CAN_EDIT, OWNER } from '../../constant';
 
 
 
@@ -84,7 +84,7 @@ function NavBar() {
     </Container>
     <EditingNavBar/>
   </Navbar>
-  <ShareForm open={shareOpen} setOpen={setShareOpen} />
+  {shareOpen?(<ShareForm open={shareOpen} setOpen={setShareOpen} />):(<></>)}
 </>
   )
 }

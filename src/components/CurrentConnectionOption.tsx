@@ -17,7 +17,7 @@ interface Props {
 function CurrentConnectionOption(props:Props) {
   const {direction} = props
   const defaultConnectionOption = useAppSelector(state => state.canvases.defaultConnectionOption)
-  const currentConnectionId = useAppSelector(state => state.canvases.currentConnectionId)
+  const currentConnectionId = useAppSelector(state => state.canvases.currentConnection?.id)
   const connections = useAppSelector(state => state.canvases.connections)
   const currentConnection = connections.find((connection) => connection.id === currentConnectionId)
 

@@ -11,7 +11,10 @@ import { RootState, AppDispatch } from '../../store/store';
 import {CustomSessionType, TableType} from "../../types"
 import { useSession } from 'next-auth/react';
 import getAxios from '../helpers/getAxios';
-import { CAN_EDIT, OWNER } from '../../types/PermissionType';
+import { CAN_EDIT, OWNER, TABLE } from '../constant';
+import Anchors from './Anchors';
+import { SettingsInputAntenna } from '@mui/icons-material';
+import TableWrapper from './TableWrapper';
 
 export const defaultTitleHeight = 20
 export const defaultErDiagramWidth = 100
@@ -44,6 +47,7 @@ function ERDiagram(props:Props) {
     const session = state.users.session
     const axios = getAxios(session as CustomSessionType | null)
     const [hovered, setHovered] = useState<boolean>(false)
+
 
 
 
@@ -90,7 +94,7 @@ function ERDiagram(props:Props) {
         rotation: erDiagramRef.current.rotation()
       }
       if (table.id === currentTable?.id && connectionPreview === null) {
-        dispatch(updateTable(newTable))
+        //dispatch(updateTable(newTable))
       }
       
     }
@@ -106,7 +110,7 @@ function ERDiagram(props:Props) {
         updatedBy: session?.id
       }
       if (table.id === currentTable?.id && connectionPreview === null) {
-        dispatch(updateTable(newTable))
+        //dispatch(updateTable(newTable))
       }
     }
     const handleDragEnd = async (e:any) => {
@@ -145,7 +149,13 @@ function ERDiagram(props:Props) {
         console.log(err)
       }
     }
-  return (<><Group 
+  return (<>
+  <Group
+  onMouseEnter={() => setHovered(true)}
+  onMouseLeave={() => setHovered(false)}
+  id={table.id}>
+    <Anchors targetRef={erDiagramRef} state={state} dispatch={dispatch} table={table} hovered={hovered}/>
+  <Group 
         draggable={editingField?.tableIndex !== tableIndex && table.id === currentTable?.id && canEdit}
         onContextMenu={handleRightClick}
         onDragMove={handleDragMove}
@@ -156,11 +166,11 @@ function ERDiagram(props:Props) {
         onTransformEnd={onTransformEnd}
         height={defaultTitleHeight}
         onClick={onClick}
-        id={table.id}
         x={initialLocation.x}
         y={initialLocation.y}
         rotation={table.rotation}
         scale={table.scale}
+        name={TABLE}
         >
           <Border targetRef={erDiagramRef} state={state} dispatch={dispatch} id={table.id}/>
         <EditableText
@@ -191,7 +201,9 @@ function ERDiagram(props:Props) {
           points={[0,0, defaultErDiagramWidth,0]}
           />
         </Group>
-        {editingField?.tableIndex !== tableIndex && table.id === currentTable?.id?
+        
+        </Group>
+        {editingField?.tableIndex !== tableIndex && table.id === currentTable?.id && canEdit?
         <>
         <Transformer
         ref={trRef}

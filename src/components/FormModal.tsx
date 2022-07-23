@@ -28,6 +28,7 @@ const style = {
     width: 700,
     maxHeight: "500px",
     bgcolor: 'background.paper',
+    overflow: "auto",
     boxShadow: 24,
     p: 4,
   }  as const;
@@ -40,6 +41,7 @@ function FormModal(props:Props) {
         aria-describedby="transition-modal-description"
         open={open}
         closeAfterTransition
+        onClose={() => setOpen(false)}
         BackdropComponent={Backdrop}
         BackdropProps={{
           timeout: 500,
@@ -52,7 +54,7 @@ function FormModal(props:Props) {
               <CloseIcon/>
             </IconButton>
             <h1 className={styles.formTitle}><span style={{marginRight: "10px"}}>
-            {icon}</span>{props.title}</h1>
+            {icon}</span><span>{props.title}</span></h1>
             {props.children}
             </div>
           </Box>

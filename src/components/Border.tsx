@@ -1,8 +1,10 @@
 import React from 'react'
 import { Stage, Layer, Rect, Text, Line } from "react-konva";
-import Anchor from './Anchor'
+import Anchor from './AnchorOld'
 import {defaultTitleHeight, defaultErDiagramWidth, defaultRowHeight} from './ERDiagram'
 import { RootState, AppDispatch } from '../../store/store';
+import { BOTTOM, LEFT, RIGHT, TOP } from '../constant';
+import { AnchorLocationType } from '../../types';
 
 interface CoordinateType {
      x: number,
@@ -29,64 +31,64 @@ function Border(props:Props) {
     const rowLength  = table !== undefined?table.rows.length:0
     const erDiagramHeight = titleHeight + rowHeight * rowLength
 
-    const getX = (location:string) => {
+    const getX = (location:AnchorLocationType) => {
         switch(location) {
-            case "left":
+            case LEFT:
                 return absolutePosition?.x
-            case "right":
+            case RIGHT:
                 return absolutePosition?.x + erDiagramWidth
-            case "top":
+            case TOP:
                 return absolutePosition?.x
-            case "bottom":
+            case BOTTOM:
                 return absolutePosition?.x  
             default:
                 return 0
         }
     }
 
-    const getY = (location:string) => {
+    const getY = (location:AnchorLocationType) => {
         switch(location) {
-            case "left":
+            case LEFT:
                 return absolutePosition?.y
-            case "right":
+            case RIGHT:
                 return absolutePosition?.y
-            case "top":
+            case TOP:
                 return absolutePosition?.y
-            case "bottom":
+            case BOTTOM:
                 return absolutePosition?.y + erDiagramHeight
             default:
                 return 0
         }
     }
     
-    const getPoints = (location:string) => {
+    const getPoints = (location:AnchorLocationType) => {
         switch(location) {
-            case "left":
+            case LEFT:
                 return [0,0,0, erDiagramHeight]
-            case "right":
+            case RIGHT:
                 return [0,0,0, erDiagramHeight]
-            case "top":
+            case TOP:
                 return [0,0,erDiagramWidth,0]
-            case "bottom":
+            case BOTTOM:
                 return [0,0,erDiagramWidth,0]     
         }
     }
 
-    const getAnchorPoint = (location:string) => {
+    const getAnchorPoint = (location:AnchorLocationType) => {
         switch(location) {
-            case "left":
+            case LEFT:
                 return {x: getX(location), y:getY(location) + (erDiagramHeight/2)}
-            case "right":
+            case RIGHT:
                 return {x: getX(location), y:getY(location) + (erDiagramHeight/2)}
-            case "top":
+            case TOP:
                 return {x: getX(location) + (erDiagramWidth/ 2), y: getY(location)}
-            case "bottom":
+            case BOTTOM:
                 return {x: getX(location) + (erDiagramWidth / 2), y: getY(location)}
             default:
                 return {x:0, y:0}
         }
     }
-    const lineLocations = ["left", "right", "top", "bottom"]
+    const lineLocations:AnchorLocationType[] = [LEFT, RIGHT, TOP, BOTTOM]
     return (
         <>
         <Line
@@ -110,9 +112,6 @@ function Border(props:Props) {
             strokeWidth={1}
             perfectDrawEnabled={false}
           />
-
-          <Anchor {...getAnchorPoint(lineLocation)} state={state} dispatch={dispatch}
-          targetRef={targetRef} id={id} location={lineLocation as "left"|"right"|"top"|"bottom"}/>
           
           </>)
         })}

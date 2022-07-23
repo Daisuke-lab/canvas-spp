@@ -12,33 +12,32 @@ import { useRouter } from 'next/router'
 import { RootState, AppDispatch } from '../../store/store';
 import { useSession } from 'next-auth/react';
 import getAxios from '../helpers/getAxios';
-import TableConnectionType from '../../types/TableConnectionType';
-import AnchorLocationType from '../../types/AnchorLocationType';
-import TableType from '../../types/TableType';
-import getAnchorPoint from '../helpers/getAnchorPoint';
-import {mainTheme} from "../../themes/MainTheme"
-import LocationType from '../../types/LocationType';
-import ShapeType from '../../types/ShapeType';
+
 
 interface Props {
+    x: any,
+    y: any,
     state: RootState,
     dispatch: AppDispatch,
-    targetRef: React.RefObject<Konva.default.Shape | Konva.default.Group>,
-    table: TableType,
-    location: AnchorLocationType
+    targetRef: React.RefObject<any>,
+    id: string,
+    location: "top" | "bottom" | "right" | "left"
 }
 
+interface DestinationType {
+  id: string,
+  anchorLocation: "top" | "bottom" | "right" | "left",
+  connectionOption: ConnectionOptionType
+}
 function Anchor(props:Props) {
-    const {dispatch, state, targetRef, table, location} = props
-    const [x,y] = getAnchorPoint(targetRef, location)
+    const {x, y, dispatch, state, targetRef, id, location} = props
     const anchorRef = useRef<Konva.default.Circle>(null)
     const currentConnectionPreview = state.canvases.connectionPreview
     const defaultConnectionOption = state.canvases.defaultConnectionOption
-    const [destination, setDestination] = useState<TableConnectionType | null>(null)
+    const [destination, setDestination] = useState<DestinationType | null>(null)
     const roomId = state.canvases.currentRoom?.id
     const session = state.users.session
     const axios = getAxios(session as CustomSessionType | null)
-    const [color, setColor] = useState<"black" | typeof mainTheme.secondary>("black")
 
   
 
@@ -52,7 +51,8 @@ function Anchor(props:Props) {
           y: 0,
         }
       }
-    const scale = targetRef.current?.scale() ?? {x:1,y:1};
+    const table = state.canvases.tables.find((table) => table.id === id)
+    const scale = targetRef.current?.scale() !== undefined?targetRef.current?.scale():{x:1,y:1};
     const titleHeight = 20  *scale.y
     const erDiagramWidth = 100 *scale.x
     const rowHeight = 15  *scale.y
@@ -64,7 +64,7 @@ function Anchor(props:Props) {
     // :location==="left"?erDiagramHeight/2
     // :Math.sqrt((erDiagramWidth)**2 + (erDiagramHeight/2)**2)
     const r = getR(location, erDiagramWidth, erDiagramHeight)
-    const rotation = getRotation(location, erDiagramWidth, r, targetRef.current?.rotation() ?? 0)
+    const rotation = getRotation(location, erDiagramWidth, r, targetRef.current?.rotation())
     // const rotation = "top"===location?targetRef.current?.rotation()
     // :"right"===location?targetRef.current?.rotation() + Math.acos(erDiagramWidth / r) * (180 / Math.PI)
     // :"bottom"===location?targetRef.current?.rotation() + Math.acos((erDiagramWidth /2) / r) * (180 / Math.PI)
@@ -81,7 +81,7 @@ function Anchor(props:Props) {
         const position = e.target.position();
         const absolutePosition = targetRef.current?.absolutePosition()
         const connectionPreview = {
-            source: {id: table.id, anchorLocation: location, connectionOption: defaultConnectionOption.source},
+            source: {id, anchorLocation: location, connectionOption: defaultConnectionOption.source},
             destination: {x: position.x, y: position.y, connectionOption: defaultConnectionOption.destination
             }
         }
@@ -93,14 +93,14 @@ function Anchor(props:Props) {
         const layer = e.target.getLayer();
 
         
-        const pointerPosition = stage.getPointerPosition() as LocationType;
+        const pointerPosition = stage.getPointerPosition();
         detectCollision(layer, pointerPosition)
         const mousePos = {
           x: pointerPosition.x - position.x,
           y: pointerPosition.y - position.y
         }
         const connectionPreview = {
-            source: {id : table.id, anchorLocation: location, connectionOption: defaultConnectionOption.source},
+            source: {id, anchorLocation: location, connectionOption: defaultConnectionOption.source},
             destination: {x:pointerPosition.x, y:pointerPosition.y, connectionOption: defaultConnectionOption.destination}
         }
         dispatch(updateConnectionPreview(connectionPreview))
@@ -115,7 +115,7 @@ function Anchor(props:Props) {
       const connectionId = uuid()
       const connectionPreview = {
         ...currentConnectionPreview,
-        source: {id: table.id, x: absolutePosition?.x, y: absolutePosition?.y, anchorLocation: location, connectionOption: defaultConnectionOption.source},
+        source: {id, x: absolutePosition?.x, y: absolutePosition?.y, anchorLocation: location, connectionOption: defaultConnectionOption.source},
         destination:finalDestination,
         id: connectionId,
         roomId: roomId
@@ -131,49 +131,53 @@ function Anchor(props:Props) {
         }
       }
 
+      const getAnchorLocation = (name:string) => {
+        const location = name.includes("right")?"right":
+                        name.includes("left")?"left":
+                        name.includes("top")?"top":
+                        "bottom"
+      }
 
-      const detectCollision = (layer:Konva.default.Layer, target:LocationType) => {
-        layer.find(`.connectable`).forEach(function (_shape) {
-          const shape = _shape as Konva.default.Shape
+      const detectCollision = (layer:any, target:any) => {
+        layer.find(`.connectable`).forEach(function (group:any) {
           // do not check intersection with itself
-          if (shape?.parent?.attrs.name === table?.id) {
+          if (group.parent.attrs.name === table?.id) {
             return;
           }
           // && group.nodeType === "Group"
-          if (haveIntersection(target, shape)) {
+          if (haveIntersection(group, target)) {
             //group.scale({x:2, y:2})
-            const name = shape.attrs.name
+            const name = group.attrs.name
             const location = name.includes("right")?"right":
                         name.includes("left")?"left":
                         name.includes("top")?"top":
                         "bottom"
-            setDestination({id: shape.parent?.attrs.id, anchorLocation: location, connectionOption: defaultConnectionOption.destination})
-            shape.fill(mainTheme.secondary);
+            setDestination({id: group.parent.attrs.id, anchorLocation: location, connectionOption: defaultConnectionOption.destination})
+            group.fill('yellow');
           } else {
-            if (shape.attrs.name.includes(destination?.anchorLocation) && shape.parent?.attrs.id === destination?.id) {
+            if (group.attrs.name.includes(destination?.anchorLocation) && group.parent.attrs.id === destination?.id) {
               setDestination(null)
             }
-            shape.fill('black');
+            group.fill('black');
           }
         })
     }
 
-    const haveIntersection = (currentPoint:LocationType, shape:Konva.default.Shape) => {
-      if (typeof shape.attrs.width === "number" && typeof shape.attrs.height === "number") {
+    const haveIntersection = (r1:any, r2:any) => {
+      if (typeof r1.attrs.width === "number" && typeof r1.attrs.height === "number") {
         return (
-          currentPoint.x > shape.attrs.x &&
-          currentPoint.x < shape.attrs.x + shape.attrs.width &&
-          currentPoint.y > shape.attrs.y &&
-          currentPoint.y < shape.attrs.y + shape.attrs.height
+          r2.x > r1.attrs.x &&
+          r2.x < r1.attrs.x + r1.attrs.width &&
+          r2.y > r1.attrs.y &&
+          r2.y < r1.attrs.y + r1.attrs.height
         );
-      } else if (typeof shape.attrs.radius === "number") {
-        const circleAbsolutePosition = shape.absolutePosition()
-        console.log("you are here")
+      } else if (typeof r1.attrs.radius === "number") {
+        const circleAbsolutePosition = r1.absolutePosition()
         return (
-          currentPoint.x > circleAbsolutePosition.x - (shape.attrs.radius)&&
-          currentPoint.x < circleAbsolutePosition.x + (shape.attrs.radius) &&
-          currentPoint.y > circleAbsolutePosition.y - (shape.attrs.radius) &&
-          currentPoint.y < circleAbsolutePosition.y + (shape.attrs.radius)
+          r2.x > circleAbsolutePosition.x - (r1.attrs.radius)&&
+          r2.x < circleAbsolutePosition.x + (r1.attrs.radius) &&
+          r2.y > circleAbsolutePosition.y - (r1.attrs.radius) &&
+          r2.y < circleAbsolutePosition.y + (r1.attrs.radius)
         )
       }else return false
     }
@@ -183,8 +187,8 @@ function Anchor(props:Props) {
     <Circle
       x={x}
       y={y}
-      radius={7}
-      fill={color}
+      radius={5/scale.x}
+      fill='black'
       draggable
       dragBoundFunc={() => dragBounds()}
       perfectDrawEnabled={false}
@@ -192,8 +196,6 @@ function Anchor(props:Props) {
       onDragStart={handleAnchorDragStart}
       onDragMove={handleAnchorDragMove}
       onDragEnd={handleAnchorDragEnd}
-      onMouseEnter={() => setColor(mainTheme.secondary)}
-      onMouseLeave={() => setColor("black")}
       name={`connectable ${location}`}
     />
   )
