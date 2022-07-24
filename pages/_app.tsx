@@ -13,6 +13,7 @@ import CircularProgress from '@mui/material/CircularProgress';
 import axios from "axios"
 import { updateSession } from "../store/reducers/userReducer"
 import { SnackbarProvider} from 'notistack';
+import Loading from "../src/components/Loading"
 
 
 export default function App({
@@ -24,6 +25,7 @@ export default function App({
     <SessionProvider session={session}>
     <SnackbarProvider maxSnack={3}>
       <Auth>
+        <Loading/>
         <Component {...pageProps}  store={store} />
       </Auth>
       </SnackbarProvider>

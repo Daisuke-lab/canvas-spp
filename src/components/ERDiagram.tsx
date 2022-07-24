@@ -94,7 +94,7 @@ function ERDiagram(props:Props) {
         rotation: erDiagramRef.current.rotation()
       }
       if (table.id === currentTable?.id && connectionPreview === null) {
-        //dispatch(updateTable(newTable))
+        dispatch(updateTable(newTable))
       }
       
     }
@@ -110,7 +110,7 @@ function ERDiagram(props:Props) {
         updatedBy: session?.id
       }
       if (table.id === currentTable?.id && connectionPreview === null) {
-        //dispatch(updateTable(newTable))
+        dispatch(updateTable(newTable))
       }
     }
     const handleDragEnd = async (e:any) => {

@@ -12,7 +12,6 @@ export default function reflectConnectionChange(state:RootState, dispatch:AppDis
             dispatch(addConnection(connection))
             break
         case "update":
-            console.log("you are on update")
             dispatch(updateConnection(connection))
             break
         case "delete":

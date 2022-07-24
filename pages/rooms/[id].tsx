@@ -95,6 +95,7 @@ const Room: NextPage = (props) => {
         switch (msg.dataType) {
           case "ERDiagram":
             reflectTableChange(state, dispatch, msg)
+            break;
             //helperで。dispatch, msg, state
           case "Connection":
             reflectConnectionChange(state, dispatch, msg)
